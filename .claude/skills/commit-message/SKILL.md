@@ -95,6 +95,11 @@ This skill has two modes:
 - Use the generated subject and body as the commit message. Git **trailers** may follow the
   body, after a blank line: `Co-Authored-By`, `Signed-off-by`, `Refs`. They are a git
   convention, not part of the message, and they never replace a detail line.
+- **A `Co-Authored-By` trailer names the model that actually wrote the message**, in the form
+  `Co-Authored-By: Claude <Model> <noreply@anthropic.com>`. Write the model you are running
+  on, not the one of whoever called you: a subagent on Haiku writes `Claude Haiku`, a session
+  on Opus writes `Claude Opus`. Naming a model that did not do the work is a false attribution,
+  and GitHub records it as a co-author on the commit.
 - Keep the short description under 50 characters.
 - Use the imperative mood (`add` not `added`).
 - Do not end the subject line with a period.

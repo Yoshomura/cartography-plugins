@@ -98,8 +98,15 @@ imperative. Under 70 characters, no trailing period.
 
 - <what was run and what it returned, from your caller. Omit when none was supplied>
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+Co-Authored-By: Claude <Model> <noreply@anthropic.com>
+
 ```
+
+`<Model>` is the model **you** are running on, not the model of whoever called you. This
+agent runs on Sonnet, so it writes `Claude Sonnet`. Naming a model that did not do the work
+is a false attribution, and it is not harmless here: on a squash merge GitHub pre-fills the
+commit message from the pull request body, so the trailer lands in a real commit and is
+recorded there as a co-author. Same rule as the `commit-message` skill, deliberately.
 
 Write the body to a temporary file and pass it with `--body-file`. Never build it inline with
 `--body`: a shell will mangle the newlines and the backticks.
