@@ -13,6 +13,28 @@ allowed-tools:
 
 Produce a commit message that follows Conventional Commits with a Gitmoji prefix on the subject line. The message is derived from the current branch name and the staged diff.
 
+## Who the caller is
+
+Everywhere below, **the caller** is whoever this skill's context belongs to, and the word
+`user` in these rules means that caller. It is a human when the skill is loaded in a session
+someone is typing into. It is the **calling agent** when the skill is preloaded in a subagent
+such as `committer`, and then "ask the user" means report back and stop, not prompt a person.
+
+The skill itself asks nothing and decides nothing: it is text in someone else's context.
+
+## Where the intent comes from
+
+A staged diff shows **what** changed. It does not show **why**, and the why is what a commit
+message is for: a decision taken, a constraint discovered, a document read. None of it appears
+in the diff.
+
+The caller supplies that intent in its request. Build the body from it and use the diff to
+make it accurate and specific.
+
+**When no intent is supplied**, write from the staged diff alone and say so when returning. Do
+not invent a reason. A message stating a purpose the diff does not support is worse than a
+plain description of the change: it reads as knowledge and it is a guess.
+
 This skill has two modes:
 
 - **Draft mode**: return only the commit message.
