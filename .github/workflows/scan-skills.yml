@@ -1,0 +1,64 @@
+name: Scan skills
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    paths:
+      - "plugins/**"
+      - ".github/workflows/scan-skills.yml"
+
+# No security-events: this repository is private on a personal account, where code
+# scanning needs a GitHub Code Security licence. Nothing here uploads SARIF, so the
+# permission would be privilege granted for nothing.
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: skill-scanner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # Pinned: an update to the scanner must be a deliberate commit, not a run that
+      # turns red on a repository which has not changed.
+      - name: Install the scanner
+        run: pip install cisco-ai-skill-scanner==2.1.0
+
+      # The default text format is what makes the findings readable in the job log.
+      # Without code scanning the log is the only place they are read, so it is the
+      # format the gate runs on. `--output` would send the report to a file and leave
+      # the log saying nothing but "Report saved to".
+      - name: Scan the skills
+        run: skill-scanner scan-all plugins/cartography/skills --recursive --fail-on-severity high
+
+      # always(): a finding on the skills must not hide the state of the agents,
+      # otherwise each run reports one problem at a time.
+      # --lenient: agent definitions are not skills, they carry no SKILL.md.
+      - name: Scan the agents
+        if: always()
+        run: skill-scanner scan-all plugins/cartography/agents --recursive --lenient --fail-on-severity high
+
+      # A second pass, for reading rather than for blocking: HTML opens in a browser
+      # with no tooling, where SARIF is only useful to a machine that ingests it, and
+      # on this plan there is none. No --fail-on-severity here: the gate is above.
+      - name: Build the readable reports
+        if: always()
+        run: |
+          skill-scanner scan-all plugins/cartography/skills --recursive \
+            --format html --output skills-report.html
+          skill-scanner scan-all plugins/cartography/agents --recursive --lenient \
+            --format html --output agents-report.html
+
+      - name: Keep the reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-scanner-reports
+          path: "*-report.html"
+          if-no-files-found: warn
