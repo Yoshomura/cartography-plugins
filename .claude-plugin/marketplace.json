@@ -1,0 +1,21 @@
+{
+  "name": "cartography-plugins",
+  "owner": {
+    "name": "Azur-Magique"
+  },
+  "description": "Cartography tooling for repositories documented by scenario: agents that map functionality rather than code, the format they produce, and a validator for it.",
+  "plugins": [
+    {
+      "name": "cartography",
+      "source": "./plugins/cartography",
+      "description": "Maps a repository by functionality rather than by code: an index of what lives where, one detail entry per usecase, and the refusal surface. Ships the cartographer and scout agents, the format specification with its templates, and a validator.",
+      "category": "documentation",
+      "keywords": [
+        "cartography",
+        "documentation",
+        "hexagonal-architecture",
+        "codebase-map"
+      ]
+    }
+  ]
+}
