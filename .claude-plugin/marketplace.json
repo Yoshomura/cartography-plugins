@@ -1,7 +1,7 @@
 {
   "name": "cartography-plugins",
   "owner": {
-    "name": "Azur-Magique"
+    "name": "Yoshomura"
   },
   "description": "Cartography tooling for repositories documented by scenario: agents that map functionality rather than code, the format they produce, and a validator for it.",
   "plugins": [
