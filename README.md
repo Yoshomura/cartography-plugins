@@ -44,7 +44,7 @@ To declare it for a repository, commit this to that repository's `.claude/settin
       "source": {
         "source": "github",
         "repo": "Yoshomura/cartography-plugins",
-        "ref": "v1.0.0"
+        "ref": "v1.1.0"
       }
     }
   },
