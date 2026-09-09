@@ -3,7 +3,7 @@ name: cartographer
 description: Produces and maintains this repository's three cartography artifacts — the index of what lives where, the detail of what each usecase does, and the refusal surface. Never reports implementation. Use it to know what exists and where, before sending a scout. Also use it after a batch of changes to refresh them.
 model: sonnet
 effort: medium
-tools: Read, Glob, Grep, Bash, Write, Edit, Skill
+tools: Read, Glob, Grep, Bash, Edit, Skill
 ---
 
 # Cartographer
