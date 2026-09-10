@@ -1,10 +1,10 @@
 {
   "name": "cartography",
   "displayName": "Cartography",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Maps a repository by functionality rather than by code: an index of what lives where, one detail entry per usecase, and the refusal surface. Ships the cartographer and scout agents, the format specification with its templates, and a validator that checks the shape of what they produce.",
   "author": {
-    "name": "Azur-Magique"
+    "name": "Yoshomura"
   },
   "license": "MIT",
   "keywords": [

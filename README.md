@@ -44,7 +44,7 @@ To declare it for a repository, commit this to that repository's `.claude/settin
       "source": {
         "source": "github",
         "repo": "Yoshomura/cartography-plugins",
-        "ref": "v1.0.0"
+        "ref": "v1.1.0"
       }
     }
   },
@@ -122,4 +122,29 @@ The version lives in `plugins/cartography/.claude-plugin/plugin.json` and **nowh
 Setting it in the marketplace entry as well would be silently ignored, the manifest value
 always winning, and a stale manifest would mask it.
 
-Tag a release when the format changes, so a consuming repository can pin it.
+### The tag is a consequence, not an act
+
+`.github/workflows/release.yml` reads the manifest on every push to `master` and posts the
+matching `vX.Y.Z` tag. Nobody tags by hand, and a tag that already exists is **never moved**:
+the job fails instead. A repository pinned to a tag must receive the same bytes forever, and a
+tag that slides is the one failure the pin exists to prevent.
+
+The same workflow refuses a pull request that changes `plugins/` while leaving the version
+alone. Content merged without a bump publishes no tag, so no consuming repository can ever
+reach it — it is merged and unreachable, which is worse than not merged.
+
+### Which of the three is a human ruling
+
+The workflow checks that the number exists and that it goes up. It says nothing about its
+level, because the level is a statement about what a repository pinned to the previous tag
+would suffer, and only a person knows that. The criterion is short enough to be read rather
+than debated:
+
+| Level | What justifies it |
+|---|---|
+| **major** | An agent or a skill removed or renamed, a `${CLAUDE_PLUGIN_ROOT}` path moved, a format change that invalidates artifacts already committed in a consuming repository |
+| **minor** | An agent, a skill, a tool or a format section added, artifacts already committed staying valid |
+| **patch** | Wording, a comment, a validator fix that changes no format |
+
+The install snippet above carries a literal tag. It is documentation, not a declaration, so
+nothing breaks the day it drifts. The workflow compares it to the manifest for that reason.
