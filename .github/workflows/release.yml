@@ -10,6 +10,7 @@ on:
     paths:
       - "plugins/**"
       - "README.md"
+      - "CHANGELOG.md"
       - ".github/workflows/release.yml"
 
 permissions:
@@ -71,6 +72,31 @@ jobs:
 
           echo "$base -> $head."
 
+      # The release notes are written by a person, in CHANGELOG.md. They are not generated from
+      # commit subjects: notes exist to be read, and a list of subjects is neither concise nor
+      # clear. So a bump without its section is refused here, while the version number itself
+      # is still nobody's business but the author's.
+      - name: A version bump carries its changelog section
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --no-tags --force origin master:refs/remotes/origin/master
+
+          base=$(git show "origin/master:$MANIFEST" | jq -r .version)
+          head=$(jq -r .version "$MANIFEST")
+
+          if [ "$base" = "$head" ]; then
+            echo "No bump in this pull request."
+            exit 0
+          fi
+
+          notes=$(awk -v v="$head" '$0 == "## " v {f=1; next} f && /^## / {exit} f {print}' CHANGELOG.md)
+          if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
+            echo "::error::the version moves to $head and CHANGELOG.md carries no '## $head' section"
+            exit 1
+          fi
+
+          echo "CHANGELOG.md carries '## $head'."
+
   tag:
     name: tag from the manifest
     if: github.event_name == 'push'
@@ -100,18 +126,56 @@ jobs:
           head=$(git rev-parse HEAD)
 
           if existing=$(git rev-parse -q --verify "refs/tags/$tag^{commit}"); then
-            if [ "$existing" != "$head" ]; then
-              echo "::error::$tag exists on $existing, master is at $head"
+            if [ "$existing" = "$head" ]; then
+              echo "$tag already points here, nothing to do."
+            elif git diff --quiet "$existing" "$head" -- plugins/; then
+              # Master moved past the published version without touching the plugin: a
+              # changelog, README or workflow commit. There is nothing to release, and failing
+              # here would turn every such commit red for no defect.
+              echo "$tag is published on $existing and plugins/ is unchanged since. Nothing to release."
+            else
+              echo "::error::$tag is published on $existing and plugins/ changed since, master is at $head"
               echo "::error::a published version is never moved, bump the manifest instead"
               exit 1
             fi
-            echo "$tag already points here, nothing to do."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$tag" -m "cartography $version"
+            # Pushed with GITHUB_TOKEN, which does not retrigger a workflow, so no loop.
+            git push origin "$tag"
+            echo "Published $tag on $head."
+          fi
+
+      # Separate from the tagging step so that a tag published before this step existed still
+      # gets its release, the same self-healing the tag step has.
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version=$(jq -r .version "$MANIFEST")
+          tag="$version"
+
+          if ! git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "No $tag tag, so nothing to release."
             exit 0
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$tag" -m "cartography $version"
-          # Pushed with GITHUB_TOKEN, which does not retrigger a workflow, so no loop.
-          git push origin "$tag"
-          echo "Published $tag on $head."
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists, nothing to do."
+            exit 0
+          fi
+
+          notes=$(awk -v v="$tag" '$0 == "## " v {f=1; next} f && /^## / {exit} f {print}' CHANGELOG.md)
+          if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
+            echo "::error::CHANGELOG.md carries no '## $version' section"
+            exit 1
+          fi
+
+          # A semver prerelease carries a hyphen, as in 1.2.0-rc.1. Marking it keeps it out of
+          # the repository's "latest release".
+          prerelease=""
+          case "$version" in *-*) prerelease="--prerelease" ;; esac
+
+          printf '%s\n' "$notes" | gh release create "$tag" --title "$version" --notes-file - $prerelease
+          echo "Released $tag."
