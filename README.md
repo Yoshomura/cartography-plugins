@@ -44,7 +44,7 @@ To declare it for a repository, commit this to that repository's `.claude/settin
       "source": {
         "source": "github",
         "repo": "Yoshomura/cartography-plugins",
-        "ref": "v1.1.0"
+        "ref": "1.1.0"
       }
     }
   },
@@ -125,7 +125,10 @@ always winning, and a stale manifest would mask it.
 ### The tag is a consequence, not an act
 
 `.github/workflows/release.yml` reads the manifest on every push to `master` and posts the
-matching `vX.Y.Z` tag. Nobody tags by hand, and a tag that already exists is **never moved**:
+matching `X.Y.Z` tag. The tag name is the semantic version itself: semver defines a version as
+`X.Y.Z`, and `v1.1.0` is a tag name rather than a version, so naming the tag after the version
+leaves one spelling instead of two. Nobody tags by hand, and a tag that already exists is
+**never moved**:
 the job fails instead. A repository pinned to a tag must receive the same bytes forever, and a
 tag that slides is the one failure the pin exists to prevent.
 
