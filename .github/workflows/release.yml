@@ -35,11 +35,11 @@ jobs:
         run: |
           version=$(jq -r .version "$MANIFEST")
           pinned=$(grep -oP '"ref":\s*"\K[^"]+' README.md | head -1)
-          if [ "$pinned" != "v$version" ]; then
+          if [ "$pinned" != "$version" ]; then
             echo "::error::the manifest says $version, the README pins $pinned"
             exit 1
           fi
-          echo "Both say v$version."
+          echo "Both say $version."
 
       # The failure this catches is content merged without a bump: no new tag is published,
       # so no consuming repository can ever reach it. It reports nothing about the level of
@@ -86,13 +86,17 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      # The tag name is the semantic version itself, with no "v" prefix. Semver defines the
+      # version as X.Y.Z, and "v1.2.3" is a tag name rather than a version. Naming the tag
+      # after the version leaves one spelling instead of two.
+      #
       # One tag per repository, therefore one version per repository. That holds because the
       # marketplace ships a single plugin. A second one would need a prefixed tag,
-      # cartography-v1.2.0, and this step would have to loop over the manifests.
+      # cartography-1.2.0, and this step would have to loop over the manifests.
       - name: Tag the manifest version
         run: |
           version=$(jq -r .version "$MANIFEST")
-          tag="v$version"
+          tag="$version"
           head=$(git rev-parse HEAD)
 
           if existing=$(git rev-parse -q --verify "refs/tags/$tag^{commit}"); then
