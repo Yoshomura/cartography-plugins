@@ -1,0 +1,113 @@
+name: Release
+
+# No paths filter on the master push, on purpose. The tag job is a no-op when the manifest
+# version is already tagged, and running it unconditionally is what lets it catch up on a
+# version merged before this workflow existed.
+on:
+  push:
+    branches: [master]
+  pull_request:
+    paths:
+      - "plugins/**"
+      - "README.md"
+      - ".github/workflows/release.yml"
+
+permissions:
+  contents: read
+
+env:
+  MANIFEST: plugins/cartography/.claude-plugin/plugin.json
+
+jobs:
+  check:
+    name: version agreement
+    runs-on: ubuntu-latest
+    steps:
+      # fetch-depth: 0 for the three-dot diff below, which needs the merge base with master.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # The install snippet in the README carries a literal tag. It is documentation, not a
+      # declaration, so nothing breaks the day it drifts and nobody notices for months.
+      # Comparing it to the manifest costs a grep.
+      - name: The README pin matches the manifest
+        run: |
+          version=$(jq -r .version "$MANIFEST")
+          pinned=$(grep -oP '"ref":\s*"\K[^"]+' README.md | head -1)
+          if [ "$pinned" != "v$version" ]; then
+            echo "::error::the manifest says $version, the README pins $pinned"
+            exit 1
+          fi
+          echo "Both say v$version."
+
+      # The failure this catches is content merged without a bump: no new tag is published,
+      # so no consuming repository can ever reach it. It reports nothing about the level of
+      # the bump, which is a human ruling. The criterion is in the README.
+      - name: The manifest version moved with the content
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --no-tags --force origin master:refs/remotes/origin/master
+
+          base=$(git show "origin/master:$MANIFEST" | jq -r .version)
+          head=$(jq -r .version "$MANIFEST")
+
+          if git diff --quiet origin/master...HEAD -- plugins/; then
+            echo "No plugin content in this pull request, the version stays at $base."
+            exit 0
+          fi
+
+          if [ "$base" = "$head" ]; then
+            echo "::error::plugins/ changed and the version stayed at $base"
+            echo "::error::without a bump no tag is published, and no consumer can reach this"
+            exit 1
+          fi
+
+          newest=$( { echo "$base"; echo "$head"; } | sort -V | tail -1 )
+          if [ "$newest" != "$head" ]; then
+            echo "::error::$head does not come after $base"
+            exit 1
+          fi
+
+          echo "$base -> $head."
+
+  tag:
+    name: tag from the manifest
+    if: github.event_name == 'push'
+    needs: check
+    runs-on: ubuntu-latest
+    # Raised on this job alone, the only one that writes. The rest of the workflow, and the
+    # scan workflow, stay on the read-only default.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      # One tag per repository, therefore one version per repository. That holds because the
+      # marketplace ships a single plugin. A second one would need a prefixed tag,
+      # cartography-v1.2.0, and this step would have to loop over the manifests.
+      - name: Tag the manifest version
+        run: |
+          version=$(jq -r .version "$MANIFEST")
+          tag="v$version"
+          head=$(git rev-parse HEAD)
+
+          if existing=$(git rev-parse -q --verify "refs/tags/$tag^{commit}"); then
+            if [ "$existing" != "$head" ]; then
+              echo "::error::$tag exists on $existing, master is at $head"
+              echo "::error::a published version is never moved, bump the manifest instead"
+              exit 1
+            fi
+            echo "$tag already points here, nothing to do."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "cartography $version"
+          # Pushed with GITHUB_TOKEN, which does not retrigger a workflow, so no loop.
+          git push origin "$tag"
+          echo "Published $tag on $head."
