@@ -4,6 +4,29 @@ Released versions, newest first. Each section is the body of that version's GitH
 published by `.github/workflows/release.yml`. The criterion for choosing between major, minor
 and patch is in the [README](README.md#which-of-the-three-is-a-human-ruling).
 
+## git-conventions 1.0.0
+
+First release of the `git-conventions` plugin.
+
+- **committer** agent. Writes a Conventional Commits + Gitmoji message for the staged changes,
+  runs the shape check, commits with `-F`. Never stages, never pushes, never rewrites history,
+  never commits on the default branch.
+- **pr-opener** agent. Opens or updates the pull request of an already pushed branch from its
+  commits and diff. Label from the caller or the project, never hardcoded. Never pushes,
+  merges or commits.
+- **commit-message** skill with `scripts/check_message.py`, exit 1 on any deviation from the
+  shape.
+- **create-pr** skill. The conventions the agent executes.
+
+## feature-spec 1.0.0
+
+First release of the `feature-spec` plugin.
+
+- **spec-writer** agent. Turns a raw idea into a functional spec, conception only.
+- **workflow-feature-spec** skill. Mode selection, challenge, interview, write; hard rules
+  (no invented fact, no settled open reflection, no publication); the spec template shipped
+  in `references/`. Paths are defaults a project can override.
+
 ## 1.1.0
 
 **The cartographer can refresh an artifact in place.**

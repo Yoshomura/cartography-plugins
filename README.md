@@ -1,6 +1,8 @@
 # cartography-plugins
 
-A Claude Code plugin marketplace holding one plugin, `cartography`.
+A Claude Code plugin marketplace holding three workspace-agnostic plugins: `cartography`,
+`git-conventions` and `feature-spec`. The first is described below; the other two have their
+own section further down.
 
 ## What the plugin does
 
@@ -66,6 +68,52 @@ Two things to know when adopting it:
 - A project's own `.claude/agents/` **overrides** a plugin agent of the same name. Delete the
   local `cartographer.md` and `scout.md` when adopting the plugin, or the plugin's versions
   never take effect.
+
+## The other two plugins
+
+### git-conventions
+
+Commit and pull request conventions, executed by two narrow agents so that neither the staged
+diff nor the branch diff enters the caller's context.
+
+| Component | Name | Role |
+|---|---|---|
+| Agent | `committer` | Writes the message for the staged changes, checks its shape, commits. Never stages, pushes or rewrites history, never commits on the default branch |
+| Agent | `pr-opener` | Writes title and body from the commits, opens or updates the pull request. Requires the branch to be pushed already; never pushes, merges or commits |
+| Skill | `git-conventions:commit-message` | The shape `<type>(<scope>): <gitmoji> <description>`, `+ ` details, `Co-authored-by` attribution, and `scripts/check_message.py` that refuses any other shape |
+| Skill | `git-conventions:create-pr` | The pull request conventions: optional project label, body sections, signature line, never the "Generated with Claude Code" footer |
+
+The pull request label is not hardcoded: it comes from the caller's prompt or from the
+project's `CLAUDE.md`, and a project that declares none gets a pull request without a label.
+
+```
+python "${CLAUDE_PLUGIN_ROOT}/skills/commit-message/scripts/check_message.py" <message file>
+```
+
+### feature-spec
+
+A raw product idea becomes a functional spec through a mandatory sequence: mode selection
+(interactive or silent), challenge, interview, write.
+
+| Component | Name | Role |
+|---|---|---|
+| Agent | `spec-writer` | The conception agent. Grounds the idea in the project's reference material, never invents a missing fact, never settles an open reflection, never publishes |
+| Skill | `feature-spec:workflow-feature-spec` | The sequence, the hard rules, the checklist, and `references/spec.template.md` |
+
+Default paths are `docs/Features TODO/` for the idea inbox, `docs/specs/spec-<topic>.md` for
+the spec and `docs/archives/<year>/<topic>/notes-before-spec-<topic>.md` for the archived idea.
+A project overrides them in its `CLAUDE.md`. What happens to a spec afterwards (validation,
+publication, ticket derivation) belongs to the host project.
+
+Install either one the same way as `cartography`:
+
+```
+/plugin install git-conventions@cartography-plugins
+/plugin install feature-spec@cartography-plugins
+```
+
+The same override caveat applies: a project's own `.claude/agents/committer.md`,
+`pr-opener.md` or `spec-writer.md` shadows the plugin's version.
 
 ## The validator
 

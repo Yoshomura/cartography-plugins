@@ -1,0 +1,17 @@
+{
+  "name": "feature-spec",
+  "displayName": "Feature spec",
+  "version": "1.0.0",
+  "description": "Turns a raw product idea into a functional spec through a mandatory challenge, then interview, then write sequence. Ships the spec-writer agent and the workflow-feature-spec skill with the spec template. Conception only: it never invents a missing fact, never settles an open reflection, never publishes anywhere.",
+  "author": {
+    "name": "Yoshomura"
+  },
+  "license": "MIT",
+  "keywords": [
+    "specification",
+    "product",
+    "conception",
+    "functional-spec",
+    "interview"
+  ]
+}
