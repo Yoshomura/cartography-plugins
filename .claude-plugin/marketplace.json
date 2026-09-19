@@ -3,7 +3,7 @@
   "owner": {
     "name": "Yoshomura"
   },
-  "description": "Cartography tooling for repositories documented by scenario: agents that map functionality rather than code, the format they produce, and a validator for it.",
+  "description": "Workspace-agnostic Claude Code tooling: cartography of a repository by functionality, git commit and pull request conventions executed by narrow agents, and a challenge-then-interview workflow turning a raw idea into a functional spec.",
   "plugins": [
     {
       "name": "cartography",
@@ -15,6 +15,32 @@
         "documentation",
         "hexagonal-architecture",
         "codebase-map"
+      ]
+    },
+    {
+      "name": "git-conventions",
+      "source": "./plugins/git-conventions",
+      "description": "Commit and pull request conventions executed by two narrow agents: committer writes a Conventional Commits + Gitmoji message for the staged changes and commits it after a shape check; pr-opener writes a pull request from the commits and opens or updates it. Neither ever stages, pushes, merges or rewrites history.",
+      "category": "development",
+      "keywords": [
+        "git",
+        "commit",
+        "conventional-commits",
+        "gitmoji",
+        "pull-request"
+      ]
+    },
+    {
+      "name": "feature-spec",
+      "source": "./plugins/feature-spec",
+      "description": "Turns a raw product idea into a functional spec through a mandatory challenge, then interview, then write sequence. Ships the spec-writer agent and the workflow-feature-spec skill with its template. Never invents a missing fact, never settles an open reflection, never publishes anywhere.",
+      "category": "documentation",
+      "keywords": [
+        "specification",
+        "product",
+        "conception",
+        "functional-spec",
+        "interview"
       ]
     }
   ]

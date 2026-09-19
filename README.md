@@ -1,6 +1,8 @@
 # cartography-plugins
 
-A Claude Code plugin marketplace holding one plugin, `cartography`.
+A Claude Code plugin marketplace holding three workspace-agnostic plugins: `cartography`,
+`git-conventions` and `feature-spec`. The first is described below; the other two have their
+own section further down.
 
 ## What the plugin does
 
@@ -44,7 +46,7 @@ To declare it for a repository, commit this to that repository's `.claude/settin
       "source": {
         "source": "github",
         "repo": "Yoshomura/cartography-plugins",
-        "ref": "1.1.0"
+        "ref": "cartography-1.1.0"
       }
     }
   },
@@ -56,7 +58,8 @@ To declare it for a repository, commit this to that repository's `.claude/settin
 
 The `ref` is what makes the version a property of the **repository** rather than of the
 developer's machine: each repository pins its tag, bumps it alone, and the bump is a reviewable
-commit. Keep marketplace auto-update disabled, otherwise a background refresh walks past the
+commit. Tags are named `<plugin>-<version>`, so a repository using several plugins of this
+marketplace pins one tag and takes the versions of the others as they stand at that tag. Keep marketplace auto-update disabled, otherwise a background refresh walks past the
 pin.
 
 Two things to know when adopting it:
@@ -66,6 +69,52 @@ Two things to know when adopting it:
 - A project's own `.claude/agents/` **overrides** a plugin agent of the same name. Delete the
   local `cartographer.md` and `scout.md` when adopting the plugin, or the plugin's versions
   never take effect.
+
+## The other two plugins
+
+### git-conventions
+
+Commit and pull request conventions, executed by two narrow agents so that neither the staged
+diff nor the branch diff enters the caller's context.
+
+| Component | Name | Role |
+|---|---|---|
+| Agent | `committer` | Writes the message for the staged changes, checks its shape, commits. Never stages, pushes or rewrites history, never commits on the default branch |
+| Agent | `pr-opener` | Writes title and body from the commits, opens or updates the pull request. Requires the branch to be pushed already; never pushes, merges or commits |
+| Skill | `git-conventions:commit-message` | The shape `<type>(<scope>): <gitmoji> <description>`, `+ ` details, `Co-authored-by` attribution, and `scripts/check_message.py` that refuses any other shape |
+| Skill | `git-conventions:create-pr` | The pull request conventions: optional project label, body sections, signature line, never the "Generated with Claude Code" footer |
+
+The pull request label is not hardcoded: it comes from the caller's prompt or from the
+project's `CLAUDE.md`, and a project that declares none gets a pull request without a label.
+
+```
+python "${CLAUDE_PLUGIN_ROOT}/skills/commit-message/scripts/check_message.py" <message file>
+```
+
+### feature-spec
+
+A raw product idea becomes a functional spec through a mandatory sequence: mode selection
+(interactive or silent), challenge, interview, write.
+
+| Component | Name | Role |
+|---|---|---|
+| Agent | `spec-writer` | The conception agent. Grounds the idea in the project's reference material, never invents a missing fact, never settles an open reflection, never publishes |
+| Skill | `feature-spec:workflow-feature-spec` | The sequence, the hard rules, the checklist, and `references/spec.template.md` |
+
+Default paths are `docs/Features TODO/` for the idea inbox, `docs/specs/spec-<topic>.md` for
+the spec and `docs/archives/<year>/<topic>/notes-before-spec-<topic>.md` for the archived idea.
+A project overrides them in its `CLAUDE.md`. What happens to a spec afterwards (validation,
+publication, ticket derivation) belongs to the host project.
+
+Install either one the same way as `cartography`:
+
+```
+/plugin install git-conventions@cartography-plugins
+/plugin install feature-spec@cartography-plugins
+```
+
+The same override caveat applies: a project's own `.claude/agents/committer.md`,
+`pr-opener.md` or `spec-writer.md` shadows the plugin's version.
 
 ## The validator
 
@@ -118,23 +167,26 @@ with entirely different business rules, could use it as-is, it carries no busine
 
 ## Versioning
 
-The version lives in `plugins/cartography/.claude-plugin/plugin.json` and **nowhere else**.
-Setting it in the marketplace entry as well would be silently ignored, the manifest value
-always winning, and a stale manifest would mask it.
+Each plugin's version lives in its own `plugins/<plugin>/.claude-plugin/plugin.json` and
+**nowhere else**. Setting it in the marketplace entry as well would be silently ignored, the
+manifest value always winning, and a stale manifest would mask it.
 
 ### The tag is a consequence, not an act
 
-`.github/workflows/release.yml` reads the manifest on every push to `master` and posts the
-matching `X.Y.Z` tag. The tag name is the semantic version itself: semver defines a version as
-`X.Y.Z`, and `v1.1.0` is a tag name rather than a version, so naming the tag after the version
-leaves one spelling instead of two. Nobody tags by hand, and a tag that already exists is
-**never moved**:
-the job fails instead. A repository pinned to a tag must receive the same bytes forever, and a
-tag that slides is the one failure the pin exists to prevent.
+`.github/workflows/release.yml` discovers every manifest under `plugins/*/` on every push to
+`master` and posts the matching `<plugin>-X.Y.Z` tag for each: `cartography-1.1.0`,
+`git-conventions-1.0.0`. The version part is the semantic version itself, with no `v`: semver
+defines a version as `X.Y.Z`, and `v1.1.0` is a tag name rather than a version. The plugin
+name is the prefix that lets several plugins share one repository, each on its own line of
+versions. Nothing in the workflows names a plugin: a new one is covered the day its manifest
+exists. Nobody tags by hand, and a tag that already exists is **never moved**: the job fails
+instead. A repository pinned to a tag must receive the same bytes forever, and a tag that
+slides is the one failure the pin exists to prevent.
 
-The same workflow refuses a pull request that changes `plugins/` while leaving the version
-alone. Content merged without a bump publishes no tag, so no consuming repository can ever
-reach it — it is merged and unreachable, which is worse than not merged.
+The same workflow refuses a pull request that changes `plugins/<plugin>/` while leaving that
+plugin's version alone, and a bump without a `## <plugin> <version>` section in
+`CHANGELOG.md`. Content merged without a bump publishes no tag, so no consuming repository
+can ever reach it — it is merged and unreachable, which is worse than not merged.
 
 ### Which of the three is a human ruling
 
@@ -149,5 +201,6 @@ than debated:
 | **minor** | An agent, a skill, a tool or a format section added, artifacts already committed staying valid |
 | **patch** | Wording, a comment, a validator fix that changes no format |
 
-The install snippet above carries a literal tag. It is documentation, not a declaration, so
-nothing breaks the day it drifts. The workflow compares it to the manifest for that reason.
+The install snippets above carry literal tags. They are documentation, not declarations, so
+nothing breaks the day one drifts. The workflow compares each `ref` to its plugin's manifest
+for that reason.

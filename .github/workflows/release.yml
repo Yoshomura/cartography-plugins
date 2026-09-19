@@ -1,8 +1,11 @@
 name: Release
 
-# No paths filter on the master push, on purpose. The tag job is a no-op when the manifest
+# No paths filter on the master push, on purpose. The tag job is a no-op when every manifest
 # version is already tagged, and running it unconditionally is what lets it catch up on a
 # version merged before this workflow existed.
+#
+# Every job discovers the plugins from plugins/*/.claude-plugin/plugin.json. A new plugin is
+# covered the day its manifest exists; nothing here names a plugin.
 on:
   push:
     branches: [master]
@@ -16,9 +19,6 @@ on:
 permissions:
   contents: read
 
-env:
-  MANIFEST: plugins/cartography/.claude-plugin/plugin.json
-
 jobs:
   check:
     name: version agreement
@@ -29,76 +29,111 @@ jobs:
         with:
           fetch-depth: 0
 
-      # The install snippet in the README carries a literal tag. It is documentation, not a
-      # declaration, so nothing breaks the day it drifts and nobody notices for months.
-      # Comparing it to the manifest costs a grep.
-      - name: The README pin matches the manifest
+      # The install snippets in the README carry literal tags, one per plugin. They are
+      # documentation, not declarations, so nothing breaks the day one drifts and nobody
+      # notices for months. Every "ref" in the README must read <plugin>-<version> and match
+      # that plugin's manifest.
+      - name: Every README pin matches its manifest
         run: |
-          version=$(jq -r .version "$MANIFEST")
-          pinned=$(grep -oP '"ref":\s*"\K[^"]+' README.md | head -1)
-          if [ "$pinned" != "$version" ]; then
-            echo "::error::the manifest says $version, the README pins $pinned"
-            exit 1
-          fi
-          echo "Both say $version."
+          status=0
+          for pinned in $(grep -oP '"ref":\s*"\K[^"]+' README.md); do
+            name="${pinned%-*}"
+            version="${pinned##*-}"
+            manifest="plugins/$name/.claude-plugin/plugin.json"
+            if [ ! -f "$manifest" ]; then
+              echo "::error::the README pins $pinned and there is no plugin named $name"
+              status=1
+              continue
+            fi
+            actual=$(jq -r .version "$manifest")
+            if [ "$actual" != "$version" ]; then
+              echo "::error::the $name manifest says $actual, the README pins $pinned"
+              status=1
+              continue
+            fi
+            echo "$name: both say $version."
+          done
+          exit $status
 
       # The failure this catches is content merged without a bump: no new tag is published,
       # so no consuming repository can ever reach it. It reports nothing about the level of
-      # the bump, which is a human ruling. The criterion is in the README.
-      - name: The manifest version moved with the content
+      # the bump, which is a human ruling. The criterion is in the README. Checked plugin by
+      # plugin: a change under plugins/<name>/ needs a bump of that manifest and no other.
+      - name: Each changed plugin moved its version
         if: github.event_name == 'pull_request'
         run: |
           git fetch --no-tags --force origin master:refs/remotes/origin/master
+          status=0
+          for manifest in plugins/*/.claude-plugin/plugin.json; do
+            dir=$(dirname "$(dirname "$manifest")")
+            name=$(basename "$dir")
+            head=$(jq -r .version "$manifest")
 
-          base=$(git show "origin/master:$MANIFEST" | jq -r .version)
-          head=$(jq -r .version "$MANIFEST")
+            if ! git cat-file -e "origin/master:$manifest" 2>/dev/null; then
+              echo "$name: new plugin at $head."
+              continue
+            fi
+            base=$(git show "origin/master:$manifest" | jq -r .version)
 
-          if git diff --quiet origin/master...HEAD -- plugins/; then
-            echo "No plugin content in this pull request, the version stays at $base."
-            exit 0
-          fi
+            if git diff --quiet origin/master...HEAD -- "$dir/"; then
+              echo "$name: no content in this pull request, the version stays at $base."
+              continue
+            fi
 
-          if [ "$base" = "$head" ]; then
-            echo "::error::plugins/ changed and the version stayed at $base"
-            echo "::error::without a bump no tag is published, and no consumer can reach this"
-            exit 1
-          fi
+            if [ "$base" = "$head" ]; then
+              echo "::error::$dir/ changed and the version stayed at $base"
+              echo "::error::without a bump no tag is published, and no consumer can reach this"
+              status=1
+              continue
+            fi
 
-          newest=$( { echo "$base"; echo "$head"; } | sort -V | tail -1 )
-          if [ "$newest" != "$head" ]; then
-            echo "::error::$head does not come after $base"
-            exit 1
-          fi
+            newest=$( { echo "$base"; echo "$head"; } | sort -V | tail -1 )
+            if [ "$newest" != "$head" ]; then
+              echo "::error::$name: $head does not come after $base"
+              status=1
+              continue
+            fi
 
-          echo "$base -> $head."
+            echo "$name: $base -> $head."
+          done
+          exit $status
 
-      # The release notes are written by a person, in CHANGELOG.md. They are not generated from
-      # commit subjects: notes exist to be read, and a list of subjects is neither concise nor
-      # clear. So a bump without its section is refused here, while the version number itself
-      # is still nobody's business but the author's.
-      - name: A version bump carries its changelog section
+      # The release notes are written by a person, in CHANGELOG.md, under a heading
+      # "## <plugin> <version>". They are not generated from commit subjects: notes exist to be
+      # read, and a list of subjects is neither concise nor clear. So a bump without its
+      # section is refused here, while the version number itself is still nobody's business
+      # but the author's.
+      - name: Every version bump carries its changelog section
         if: github.event_name == 'pull_request'
         run: |
           git fetch --no-tags --force origin master:refs/remotes/origin/master
+          status=0
+          for manifest in plugins/*/.claude-plugin/plugin.json; do
+            name=$(basename "$(dirname "$(dirname "$manifest")")")
+            head=$(jq -r .version "$manifest")
+            base=""
+            if git cat-file -e "origin/master:$manifest" 2>/dev/null; then
+              base=$(git show "origin/master:$manifest" | jq -r .version)
+            fi
 
-          base=$(git show "origin/master:$MANIFEST" | jq -r .version)
-          head=$(jq -r .version "$MANIFEST")
+            if [ "$base" = "$head" ]; then
+              echo "$name: no bump in this pull request."
+              continue
+            fi
 
-          if [ "$base" = "$head" ]; then
-            echo "No bump in this pull request."
-            exit 0
-          fi
+            notes=$(awk -v h="## $name $head" '$0 == h {f=1; next} f && /^## / {exit} f {print}' CHANGELOG.md)
+            if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
+              echo "::error::$name moves to $head and CHANGELOG.md carries no '## $name $head' section"
+              status=1
+              continue
+            fi
 
-          notes=$(awk -v v="$head" '$0 == "## " v {f=1; next} f && /^## / {exit} f {print}' CHANGELOG.md)
-          if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
-            echo "::error::the version moves to $head and CHANGELOG.md carries no '## $head' section"
-            exit 1
-          fi
-
-          echo "CHANGELOG.md carries '## $head'."
+            echo "CHANGELOG.md carries '## $name $head'."
+          done
+          exit $status
 
   tag:
-    name: tag from the manifest
+    name: tag from the manifests
     if: github.event_name == 'push'
     needs: check
     runs-on: ubuntu-latest
@@ -112,70 +147,79 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      # The tag name is the semantic version itself, with no "v" prefix. Semver defines the
-      # version as X.Y.Z, and "v1.2.3" is a tag name rather than a version. Naming the tag
-      # after the version leaves one spelling instead of two.
-      #
-      # One tag per repository, therefore one version per repository. That holds because the
-      # marketplace ships a single plugin. A second one would need a prefixed tag,
-      # cartography-1.2.0, and this step would have to loop over the manifests.
-      - name: Tag the manifest version
+      # The tag name is <plugin>-<version>, one tag per plugin version. Semver defines the
+      # version as X.Y.Z; the plugin name is the prefix that lets several plugins share one
+      # repository, each with its own line of versions. A published tag is never moved: a
+      # repository pinned to it must receive the same bytes forever.
+      - name: Tag every manifest version
         run: |
-          version=$(jq -r .version "$MANIFEST")
-          tag="$version"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           head=$(git rev-parse HEAD)
+          status=0
+          for manifest in plugins/*/.claude-plugin/plugin.json; do
+            dir=$(dirname "$(dirname "$manifest")")
+            name=$(basename "$dir")
+            version=$(jq -r .version "$manifest")
+            tag="$name-$version"
 
-          if existing=$(git rev-parse -q --verify "refs/tags/$tag^{commit}"); then
-            if [ "$existing" = "$head" ]; then
-              echo "$tag already points here, nothing to do."
-            elif git diff --quiet "$existing" "$head" -- plugins/; then
-              # Master moved past the published version without touching the plugin: a
-              # changelog, README or workflow commit. There is nothing to release, and failing
-              # here would turn every such commit red for no defect.
-              echo "$tag is published on $existing and plugins/ is unchanged since. Nothing to release."
+            if existing=$(git rev-parse -q --verify "refs/tags/$tag^{commit}"); then
+              if [ "$existing" = "$head" ]; then
+                echo "$tag already points here, nothing to do."
+              elif git diff --quiet "$existing" "$head" -- "$dir/"; then
+                # Master moved past the published version without touching this plugin: a
+                # changelog, README, workflow or other-plugin commit. There is nothing to
+                # release, and failing here would turn every such commit red for no defect.
+                echo "$tag is published on $existing and $dir/ is unchanged since. Nothing to release."
+              else
+                echo "::error::$tag is published on $existing and $dir/ changed since, master is at $head"
+                echo "::error::a published version is never moved, bump the manifest instead"
+                status=1
+              fi
             else
-              echo "::error::$tag is published on $existing and plugins/ changed since, master is at $head"
-              echo "::error::a published version is never moved, bump the manifest instead"
-              exit 1
+              git tag -a "$tag" -m "$name $version"
+              # Pushed with GITHUB_TOKEN, which does not retrigger a workflow, so no loop.
+              git push origin "$tag"
+              echo "Published $tag on $head."
             fi
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git tag -a "$tag" -m "cartography $version"
-            # Pushed with GITHUB_TOKEN, which does not retrigger a workflow, so no loop.
-            git push origin "$tag"
-            echo "Published $tag on $head."
-          fi
+          done
+          exit $status
 
       # Separate from the tagging step so that a tag published before this step existed still
       # gets its release, the same self-healing the tag step has.
-      - name: Publish the release
+      - name: Publish the releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          version=$(jq -r .version "$MANIFEST")
-          tag="$version"
+          status=0
+          for manifest in plugins/*/.claude-plugin/plugin.json; do
+            name=$(basename "$(dirname "$(dirname "$manifest")")")
+            version=$(jq -r .version "$manifest")
+            tag="$name-$version"
 
-          if ! git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
-            echo "No $tag tag, so nothing to release."
-            exit 0
-          fi
+            if ! git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+              echo "No $tag tag, so nothing to release."
+              continue
+            fi
 
-          if gh release view "$tag" >/dev/null 2>&1; then
-            echo "Release $tag already exists, nothing to do."
-            exit 0
-          fi
+            if gh release view "$tag" >/dev/null 2>&1; then
+              echo "Release $tag already exists, nothing to do."
+              continue
+            fi
 
-          notes=$(awk -v v="$tag" '$0 == "## " v {f=1; next} f && /^## / {exit} f {print}' CHANGELOG.md)
-          if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
-            echo "::error::CHANGELOG.md carries no '## $version' section"
-            exit 1
-          fi
+            notes=$(awk -v h="## $name $version" '$0 == h {f=1; next} f && /^## / {exit} f {print}' CHANGELOG.md)
+            if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
+              echo "::error::CHANGELOG.md carries no '## $name $version' section"
+              status=1
+              continue
+            fi
 
-          # A semver prerelease carries a hyphen, as in 1.2.0-rc.1. Marking it keeps it out of
-          # the repository's "latest release".
-          prerelease=""
-          case "$version" in *-*) prerelease="--prerelease" ;; esac
+            # A semver prerelease carries a hyphen, as in 1.2.0-rc.1. Marking it keeps it out of
+            # the repository's "latest release".
+            prerelease=""
+            case "$version" in *-*) prerelease="--prerelease" ;; esac
 
-          printf '%s\n' "$notes" | gh release create "$tag" --title "$version" --notes-file - $prerelease
-          echo "Released $tag."
+            printf '%s\n' "$notes" | gh release create "$tag" --title "$tag" --notes-file - $prerelease
+            echo "Released $tag."
+          done
+          exit $status
