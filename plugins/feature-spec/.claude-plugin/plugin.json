@@ -1,8 +1,8 @@
 {
   "name": "feature-spec",
-  "displayName": "Feature spec",
-  "version": "1.0.0",
-  "description": "Turns a raw product idea into a functional spec through a mandatory challenge, then interview, then write sequence. Ships the spec-writer agent and the workflow-feature-spec skill with the spec template. Conception only: it never invents a missing fact, never settles an open reflection, never publishes anywhere.",
+  "displayName": "Feature specification",
+  "version": "1.1.0",
+  "description": "Turns a raw product idea into a functional specification in two passes: spec-writer runs the mandatory challenge, then interview, then write sequence; spec-second-pass reads the result with another model and amends it with what the first pass left out. Ships the workflow-feature-spec skill with the specification template, which a project may replace with its own. Conception only: it never invents a missing fact, never settles an open reflection, never publishes anywhere.",
   "author": {
     "name": "Yoshomura"
   },
@@ -11,7 +11,8 @@
     "specification",
     "product",
     "conception",
-    "functional-spec",
-    "interview"
+    "functional-specification",
+    "interview",
+    "second-pass"
   ]
 }

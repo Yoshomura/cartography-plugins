@@ -3,7 +3,7 @@
   "owner": {
     "name": "Yoshomura"
   },
-  "description": "Workspace-agnostic Claude Code tooling: cartography of a repository by functionality, git commit and pull request conventions executed by narrow agents, and a challenge-then-interview workflow turning a raw idea into a functional spec.",
+  "description": "Workspace-agnostic Claude Code tooling: cartography of a repository by functionality, git commit and pull request conventions executed by narrow agents, a two-pass challenge-then-interview workflow turning a raw idea into a functional specification, and a mirror of the Claude Code agents onto Codex.",
   "plugins": [
     {
       "name": "cartography",
@@ -33,14 +33,28 @@
     {
       "name": "feature-spec",
       "source": "./plugins/feature-spec",
-      "description": "Turns a raw product idea into a functional spec through a mandatory challenge, then interview, then write sequence. Ships the spec-writer agent and the workflow-feature-spec skill with its template. Never invents a missing fact, never settles an open reflection, never publishes anywhere.",
+      "description": "Turns a raw product idea into a functional specification in two passes: spec-writer runs the mandatory challenge, then interview, then write sequence; spec-second-pass reads the result with another model and amends it with what the first pass left out. Ships the workflow-feature-spec skill with the specification template, which a project may replace with its own. Never invents a missing fact, never settles an open reflection, never publishes anywhere.",
       "category": "documentation",
       "keywords": [
         "specification",
         "product",
         "conception",
-        "functional-spec",
-        "interview"
+        "functional-specification",
+        "interview",
+        "second-pass"
+      ]
+    },
+    {
+      "name": "codex-mirror",
+      "source": "./plugins/codex-mirror",
+      "description": "Mirrors a project's Claude Code agents and skills onto Codex: every agent of .claude/agents/ and of each enabled plugin becomes a .codex/agents/*.toml, .claude/skills/ is copied to .agents/skills/, and a model table maps each Claude model to a Codex model. A SessionStart hook reports a stale mirror. Codex cannot load a subagent from a plugin; this is how a plugin's agents reach it.",
+      "category": "development",
+      "keywords": [
+        "codex",
+        "subagents",
+        "claude-code",
+        "mirror",
+        "toml"
       ]
     }
   ]

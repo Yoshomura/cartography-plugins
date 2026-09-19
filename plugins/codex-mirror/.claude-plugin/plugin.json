@@ -1,0 +1,17 @@
+{
+  "name": "codex-mirror",
+  "displayName": "Codex mirror",
+  "version": "1.0.0",
+  "description": "Mirrors a project's Claude Code agents and skills onto Codex: every agent of .claude/agents/ and of each enabled plugin becomes a .codex/agents/*.toml, .claude/skills/ is copied to .agents/skills/, and a model table maps each Claude model to a Codex model. A SessionStart hook reports generated files that are missing or out of date. Codex cannot load a subagent from a plugin; this is how a plugin's agents reach it.",
+  "author": {
+    "name": "Yoshomura"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "subagents",
+    "claude-code",
+    "mirror",
+    "toml"
+  ]
+}
