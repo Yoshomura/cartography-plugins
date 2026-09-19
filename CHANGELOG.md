@@ -1,7 +1,8 @@
 # Changelog
 
-Released versions, newest first. Each section is the body of that version's GitHub release,
-published by `.github/workflows/release.yml`. The criterion for choosing between major, minor
+Released versions, newest first, one section per plugin version, headed `## <plugin> <version>`.
+Each section is the body of that release, published by `.github/workflows/release.yml` under
+the tag `<plugin>-<version>`. The criterion for choosing between major, minor
 and patch is in the [README](README.md#which-of-the-three-is-a-human-ruling).
 
 ## git-conventions 1.0.0
@@ -27,7 +28,7 @@ First release of the `feature-spec` plugin.
   (no invented fact, no settled open reflection, no publication); the spec template shipped
   in `references/`. Paths are defaults a project can override.
 
-## 1.1.0
+## cartography 1.1.0
 
 **The cartographer can refresh an artifact in place.**
 
@@ -43,7 +44,7 @@ The manifest also names Yoshomura as author.
 Nothing else changed. A repository pinned to 1.0.0 keeps working exactly as before, and moving
 to 1.1.0 invalidates no artifact already committed.
 
-## 1.0.0
+## cartography 1.0.0
 
 First release.
 

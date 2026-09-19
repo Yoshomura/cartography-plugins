@@ -46,7 +46,7 @@ To declare it for a repository, commit this to that repository's `.claude/settin
       "source": {
         "source": "github",
         "repo": "Yoshomura/cartography-plugins",
-        "ref": "1.1.0"
+        "ref": "cartography-1.1.0"
       }
     }
   },
@@ -58,7 +58,8 @@ To declare it for a repository, commit this to that repository's `.claude/settin
 
 The `ref` is what makes the version a property of the **repository** rather than of the
 developer's machine: each repository pins its tag, bumps it alone, and the bump is a reviewable
-commit. Keep marketplace auto-update disabled, otherwise a background refresh walks past the
+commit. Tags are named `<plugin>-<version>`, so a repository using several plugins of this
+marketplace pins one tag and takes the versions of the others as they stand at that tag. Keep marketplace auto-update disabled, otherwise a background refresh walks past the
 pin.
 
 Two things to know when adopting it:
@@ -166,23 +167,26 @@ with entirely different business rules, could use it as-is, it carries no busine
 
 ## Versioning
 
-The version lives in `plugins/cartography/.claude-plugin/plugin.json` and **nowhere else**.
-Setting it in the marketplace entry as well would be silently ignored, the manifest value
-always winning, and a stale manifest would mask it.
+Each plugin's version lives in its own `plugins/<plugin>/.claude-plugin/plugin.json` and
+**nowhere else**. Setting it in the marketplace entry as well would be silently ignored, the
+manifest value always winning, and a stale manifest would mask it.
 
 ### The tag is a consequence, not an act
 
-`.github/workflows/release.yml` reads the manifest on every push to `master` and posts the
-matching `X.Y.Z` tag. The tag name is the semantic version itself: semver defines a version as
-`X.Y.Z`, and `v1.1.0` is a tag name rather than a version, so naming the tag after the version
-leaves one spelling instead of two. Nobody tags by hand, and a tag that already exists is
-**never moved**:
-the job fails instead. A repository pinned to a tag must receive the same bytes forever, and a
-tag that slides is the one failure the pin exists to prevent.
+`.github/workflows/release.yml` discovers every manifest under `plugins/*/` on every push to
+`master` and posts the matching `<plugin>-X.Y.Z` tag for each: `cartography-1.1.0`,
+`git-conventions-1.0.0`. The version part is the semantic version itself, with no `v`: semver
+defines a version as `X.Y.Z`, and `v1.1.0` is a tag name rather than a version. The plugin
+name is the prefix that lets several plugins share one repository, each on its own line of
+versions. Nothing in the workflows names a plugin: a new one is covered the day its manifest
+exists. Nobody tags by hand, and a tag that already exists is **never moved**: the job fails
+instead. A repository pinned to a tag must receive the same bytes forever, and a tag that
+slides is the one failure the pin exists to prevent.
 
-The same workflow refuses a pull request that changes `plugins/` while leaving the version
-alone. Content merged without a bump publishes no tag, so no consuming repository can ever
-reach it — it is merged and unreachable, which is worse than not merged.
+The same workflow refuses a pull request that changes `plugins/<plugin>/` while leaving that
+plugin's version alone, and a bump without a `## <plugin> <version>` section in
+`CHANGELOG.md`. Content merged without a bump publishes no tag, so no consuming repository
+can ever reach it — it is merged and unreachable, which is worse than not merged.
 
 ### Which of the three is a human ruling
 
@@ -197,5 +201,6 @@ than debated:
 | **minor** | An agent, a skill, a tool or a format section added, artifacts already committed staying valid |
 | **patch** | Wording, a comment, a validator fix that changes no format |
 
-The install snippet above carries a literal tag. It is documentation, not a declaration, so
-nothing breaks the day it drifts. The workflow compares it to the manifest for that reason.
+The install snippets above carry literal tags. They are documentation, not declarations, so
+nothing breaks the day one drifts. The workflow compares each `ref` to its plugin's manifest
+for that reason.

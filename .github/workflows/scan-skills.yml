@@ -30,19 +30,36 @@ jobs:
       - name: Install the scanner
         run: pip install cisco-ai-skill-scanner==2.1.0
 
-      # The default text format is what makes the findings readable in the job log.
-      # Without code scanning the log is the only place they are read, so it is the
-      # format the gate runs on. `--output` would send the report to a file and leave
-      # the log saying nothing but "Report saved to".
+      # Every plugin under plugins/ is scanned; nothing here names one. The default text
+      # format is what makes the findings readable in the job log. Without code scanning
+      # the log is the only place they are read, so it is the format the gate runs on.
+      # `--output` would send the report to a file and leave the log saying nothing but
+      # "Report saved to".
       - name: Scan the skills
-        run: skill-scanner scan-all plugins/cartography/skills --recursive --fail-on-severity high
+        run: |
+          status=0
+          for dir in plugins/*/skills; do
+            [ -d "$dir" ] || continue
+            echo "::group::$dir"
+            skill-scanner scan-all "$dir" --recursive --fail-on-severity high || status=1
+            echo "::endgroup::"
+          done
+          exit $status
 
       # always(): a finding on the skills must not hide the state of the agents,
       # otherwise each run reports one problem at a time.
       # --lenient: agent definitions are not skills, they carry no SKILL.md.
       - name: Scan the agents
         if: always()
-        run: skill-scanner scan-all plugins/cartography/agents --recursive --lenient --fail-on-severity high
+        run: |
+          status=0
+          for dir in plugins/*/agents; do
+            [ -d "$dir" ] || continue
+            echo "::group::$dir"
+            skill-scanner scan-all "$dir" --recursive --lenient --fail-on-severity high || status=1
+            echo "::endgroup::"
+          done
+          exit $status
 
       # A second pass, for reading rather than for blocking: HTML opens in a browser
       # with no tooling, where SARIF is only useful to a machine that ingests it, and
@@ -50,10 +67,18 @@ jobs:
       - name: Build the readable reports
         if: always()
         run: |
-          skill-scanner scan-all plugins/cartography/skills --recursive \
-            --format html --output skills-report.html
-          skill-scanner scan-all plugins/cartography/agents --recursive --lenient \
-            --format html --output agents-report.html
+          for dir in plugins/*/skills; do
+            [ -d "$dir" ] || continue
+            name=$(basename "$(dirname "$dir")")
+            skill-scanner scan-all "$dir" --recursive \
+              --format html --output "$name-skills-report.html"
+          done
+          for dir in plugins/*/agents; do
+            [ -d "$dir" ] || continue
+            name=$(basename "$(dirname "$dir")")
+            skill-scanner scan-all "$dir" --recursive --lenient \
+              --format html --output "$name-agents-report.html"
+          done
 
       - name: Keep the reports
         if: always()
