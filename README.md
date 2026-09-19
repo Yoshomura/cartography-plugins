@@ -1,8 +1,8 @@
 # cartography-plugins
 
-A Claude Code plugin marketplace holding three workspace-agnostic plugins: `cartography`,
-`git-conventions` and `feature-spec`. The first is described below; the other two have their
-own section further down.
+A Claude Code plugin marketplace holding four workspace-agnostic plugins: `cartography`,
+`git-conventions`, `feature-spec` and `codex-mirror`. The first is described below; the other
+three have their own section further down.
 
 ## What the plugin does
 
@@ -70,7 +70,7 @@ Two things to know when adopting it:
   local `cartographer.md` and `scout.md` when adopting the plugin, or the plugin's versions
   never take effect.
 
-## The other two plugins
+## The other three plugins
 
 ### git-conventions
 
@@ -93,28 +93,69 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/commit-message/scripts/check_message.py" <m
 
 ### feature-spec
 
-A raw product idea becomes a functional spec through a mandatory sequence: mode selection
-(interactive or silent), challenge, interview, write.
+A raw product idea becomes a functional specification in two passes. The first pass is a
+mandatory sequence: mode selection (interactive or silent), challenge, interview, write. The
+second pass is another model reading the result with a fresh context, redoing the analysis and
+amending the same file with what the first pass left out: unasked questions, unsourced facts,
+uncovered cases, unexamined alternatives. It never reverses a decision taken with the user; a
+disagreement becomes an open question, and the human arbitrates.
 
 | Component | Name | Role |
 |---|---|---|
-| Agent | `spec-writer` | The conception agent. Grounds the idea in the project's reference material, never invents a missing fact, never settles an open reflection, never publishes |
-| Skill | `feature-spec:workflow-feature-spec` | The sequence, the hard rules, the checklist, and `references/spec.template.md` |
+| Agent | `spec-writer` | First pass, `opus`. Grounds the idea in the project's reference material, never invents a missing fact, never settles an open reflection, never publishes |
+| Agent | `spec-second-pass` | Second pass, `fable`. Reads the idea and the specification, adds what the first pass did not see, marks every addition `(second pass)` |
+| Skill | `feature-spec:workflow-feature-spec` | The sequence of each pass, the hard rules, the checklists, and `references/spec.template.md` |
 
-Default paths are `docs/Features TODO/` for the idea inbox, `docs/specs/spec-<topic>.md` for
-the spec and `docs/archives/<year>/<topic>/notes-before-spec-<topic>.md` for the archived idea.
-A project overrides them in its `CLAUDE.md`. What happens to a spec afterwards (validation,
-publication, ticket derivation) belongs to the host project.
+The word is **specification**; "spec" survives only in the identifiers a consuming repository
+pins: the agent names, the skill name and the default paths. Those defaults are
+`docs/Features TODO/` for the idea inbox, `docs/specs/spec-<topic>.md` for the specification
+and `docs/archives/<year>/<topic>/notes-before-spec-<topic>.md` for the archived idea. A project
+overrides them in its `CLAUDE.md`, and it may declare its own template there, which replaces
+the shipped one entirely. What happens to a specification afterwards (validation, publication,
+ticket derivation) belongs to the host project.
 
-Install either one the same way as `cartography`:
+### codex-mirror
+
+Codex reads its subagents from `.codex/agents/*.toml` and from nowhere else: a plugin can ship
+skills, MCP servers and hooks to Codex, not subagents. A project that runs the same agents
+under Claude Code and under Codex therefore needs a derived copy of each definition, and this
+plugin derives it.
+
+| Component | Name | Role |
+|---|---|---|
+| Skill | `codex-mirror:codex-mirror` | `scripts/sync-codex.py`: every agent of `.claude/agents/` and of each plugin enabled in `.claude/settings.json` becomes a `.codex/agents/<name>.toml`; `.claude/skills/` is copied to `.agents/skills/`; `--check` fails the gate on a stale file |
+| Table | `references/models.toml` | Claude model name to Codex slug, Claude effort to `model_reasoning_effort`. A project overrides an entry in `.codex/mirror.toml` |
+| Hook | `SessionStart` | Runs the check at `startup` and `resume`, reports a stale mirror into the session, never regenerates on its own |
+
+The differences between the two runtimes are declared once, in the script: rules in
+`.claude/rules/` are not auto-loaded by Codex, so agents are told to read them; an agent whose
+tools cannot write runs read-only; `${CLAUDE_PLUGIN_ROOT}` is resolved to the installed plugin
+root. Ownership is written in each generated file's first line: the generated header means the
+script rewrites it, `# codex-mirror: manual` means the project took it over and it may diverge,
+declared. The script also compares the model table with the list Codex caches in
+`~/.codex/models_cache.json` and reports a slug that is retiring, with the replacement Codex
+names.
+
+Install any of the three the same way as `cartography`:
 
 ```
 /plugin install git-conventions@cartography-plugins
 /plugin install feature-spec@cartography-plugins
+/plugin install codex-mirror@cartography-plugins
 ```
 
 The same override caveat applies: a project's own `.claude/agents/committer.md`,
-`pr-opener.md` or `spec-writer.md` shadows the plugin's version.
+`pr-opener.md`, `spec-writer.md` or `spec-second-pass.md` shadows the plugin's version.
+
+Codex accepts this marketplace as it is, through its Claude-compatible manifest support:
+
+```
+codex plugin marketplace add Yoshomura/cartography-plugins --ref <plugin>-<version>
+```
+
+then, in the consuming project's `.codex/config.toml`, one `[plugins."<name>@cartography-plugins"]`
+section with `enabled = true` per plugin. Skills arrive that way; agents arrive through
+`codex-mirror`.
 
 ## The validator
 
