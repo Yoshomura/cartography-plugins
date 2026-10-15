@@ -6,8 +6,8 @@ own section further down.
 
 ## What the plugin does
 
-It maps a repository by **functionality**, not by code, and it produces three artifacts that
-answer three questions asked at three different moments:
+It reverse engineers an existing system and maps it by **functionality**, not by code, and it
+produces three artifacts that answer three questions asked at three different moments:
 
 | Artifact | Question | Read |
 |---|---|---|
@@ -18,13 +18,23 @@ answer three questions asked at three different moments:
 They are committed and **not normative**. The documentation of the system stays the source of
 truth; these are measuring instruments, and each says so in its own header.
 
+The system is read from one of two sources, declared by the `source` key of every artifact and
+equal variants of the same reverse engineering:
+
+| `source` | What is read | The usecase is |
+|---|---|---|
+| `code` | Existing code, in any language and any folder layout | the path of the existing file implementing it |
+| `functionality` | A functionality observed or described: a product studied from the outside, a user interface, network traffic, a specification, documentation | a usecase name, unique in the set |
+
+An absent `source` reads `code`, so artifacts written before format 1.1.0 stay valid.
+
 ## What it ships
 
 | Component | Name | Role |
 |---|---|---|
 | Agent | `cartographer` | The judgment: what to attach to what, what to report, what never to write |
-| Agent | `scout` | A lookup at one coordinate, answering one question, returning code |
-| Skill | `cartography:cartography` | The format: specification, templates, validator |
+| Agent | `scout` | A lookup at one coordinate, answering one question, returning code or the observed evidence |
+| Skill | `cartography:cartography` | The format: specification, one template set per source, validator |
 
 The agent and the skill are separated on purpose. A shape reproduced from memory drifts run
 after run until two repositories stop being comparable; judgment cannot be templated at all.
@@ -46,7 +56,7 @@ To declare it for a repository, commit this to that repository's `.claude/settin
       "source": {
         "source": "github",
         "repo": "Yoshomura/cartography-plugins",
-        "ref": "cartography-1.1.0"
+        "ref": "cartography-2.0.0"
       }
     }
   },
@@ -123,9 +133,17 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/cartography/scripts/validate.py" docs
 ```
 
 It checks the **form**, never the content: frontmatter keys, a header blockquote copied
-character for character, sections present and in order, the case counter, the summary length,
-the refusal mechanisms, orphan detail entries, and a list of banned vocabulary — purpose,
-judgment and supposition, the three ways an observation turns into an invention.
+character for character from the set of the file's source, sections present and in order, the
+case counter, the usecase (a file path of any language with source `code`, a unique plain name
+with source `functionality`), the anchors of an observed functionality, the summary length, the
+refusal mechanisms, orphan detail entries, and a list of banned vocabulary — purpose, judgment
+and supposition, the three ways an observation turns into an invention.
+
+Its fixtures live in `tests/cartography/fixtures/`, one folder per set, `pass-*` or `fail-*`:
+
+```
+python -m unittest discover -s tests/cartography -v
+```
 
 Exit 0 when everything conforms, 1 otherwise.
 
@@ -159,11 +177,12 @@ ingests it, and there is none.
 
 ⚠️ Best-effort detection. A scan returning nothing does not mean the plugin is free of threats.
 
-## Business-agnostic, by construction
+## Business- and technology-agnostic, by construction
 
-No domain term appears in the plugin or in its templates. That is deliberate and it is the
-criterion the architecture it serves sets for a shared technical library: if another company,
-with entirely different business rules, could use it as-is, it carries no business rule.
+No domain term appears in the plugin or in its templates, and no language, framework or folder
+convention either. That is deliberate and it is the criterion the architecture it serves sets
+for a shared technical library: if another company, with entirely different business rules and
+another stack, could use it as-is, it carries no business rule and no technology choice.
 
 ## Versioning
 

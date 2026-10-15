@@ -2,28 +2,30 @@
 kind: detail-entry
 normative: false
 generator: cartographer
+source: functionality
 scenario: <SCENARIO, empty when the usecase answers none>
-usecase: src/<Project>.Hexagon/Application/<Name>UseCase.cs
+usecase: <usecase name, unique across the map and the detail entries, no path and no extension>
 base: <commit sha of this repository at the last pass, empty on a first pass>
 ---
 
 # <SCENARIO> — <title of the scenario>
 
 > **Observation, not specification.** The scenario says what should happen; this file says
-> what the code does. Divergences are listed at the end, and settled in the specification,
-> not here.
+> what the functionality does, as observed or described. Divergences are listed at the end,
+> and settled in the specification, not here.
 
 ## What it answers
 > Source: the scenario. Compressed, not inferred.
 
 <the need, in the scenario's own terms. Where there is no scenario, say so, hold only what
-the code shows, and mark it `?`.>
+the functionality shows, and mark it `?`.>
 
 ## What it does
-> Source: the code. Observed, not interpreted.
+> Source: the functionality. Observed, not interpreted.
 
-<what happens, in functional terms. No purpose, no judgment, no completion, no class name,
-no control flow. Every sentence refutable by reading one precise place in the code.>
+<what happens, in functional terms, as seen on the screen, on the wire or in a document. No
+purpose, no judgment, no completion. Every sentence refutable by one precise observation: a
+screen, a request, a response, a document section.>
 
 ## The rules it applies
 
@@ -39,11 +41,12 @@ An empty cell in the Case column is a finding: carry it down to divergences.
 
 | Needs | From |
 |---|---|
-| <what it reads, in business terms> | <own database, a named system, the runtime> |
+| <what it reads, in business terms> | <what the user enters, a named system, a document> |
 
 ## What it produces
 
-<the outcome, and the messages emitted. Say plainly when nothing leaves.>
+<the outcome, and what leaves: messages, documents, notifications. Say plainly when nothing
+leaves.>
 
 ## Observed divergences
 

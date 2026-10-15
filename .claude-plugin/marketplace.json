@@ -3,18 +3,19 @@
   "owner": {
     "name": "Yoshomura"
   },
-  "description": "Workspace-agnostic Claude Code tooling: cartography of a repository by functionality, git commit and pull request conventions executed by narrow agents, and a challenge-then-interview workflow turning a raw idea into a functional spec.",
+  "description": "Workspace-agnostic Claude Code tooling: cartography of an existing system by functionality, from its code or from an observed functionality, git commit and pull request conventions executed by narrow agents, and a challenge-then-interview workflow turning a raw idea into a functional spec.",
   "plugins": [
     {
       "name": "cartography",
       "source": "./plugins/cartography",
-      "description": "Maps a repository by functionality rather than by code: an index of what lives where, one detail entry per usecase, and the refusal surface. Ships the cartographer and scout agents, the format specification with its templates, and a validator.",
+      "description": "Reverse engineers an existing system into a functional cartography, from its code in any language or from a functionality observed or described: an index of what lives where, one detail entry per usecase, and the refusal surface. Ships the cartographer and scout agents, the format specification with its templates, and a validator.",
       "category": "documentation",
       "keywords": [
         "cartography",
         "documentation",
-        "hexagonal-architecture",
-        "codebase-map"
+        "reverse-engineering",
+        "codebase-map",
+        "functional-map"
       ]
     },
     {
