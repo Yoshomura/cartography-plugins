@@ -1,8 +1,13 @@
 # cartography-plugins
 
-A Claude Code plugin marketplace holding three workspace-agnostic plugins: `cartography`,
-`git-conventions` and `feature-spec`. The first is described below; the other two have their
-own section further down.
+A Claude Code plugin marketplace holding two workspace-agnostic plugins: `cartography` and
+`feature-spec`. The first is described below; the other has its own section further down.
+
+The commit and pull request conventions this repository follows, and the `committer` and
+`pr-manager` agents that apply them, come from the `commit-and-pr` plugin of
+[yoshomura-git-managment](https://github.com/Yoshomura/yoshomura-git-managment), declared in
+`.claude/settings.json`. The `git-conventions` plugin that used to live here was merged into it;
+its `git-conventions-1.0.0` tag stays published for the repositories that pin it.
 
 ## What the plugin does
 
@@ -46,7 +51,7 @@ To declare it for a repository, commit this to that repository's `.claude/settin
       "source": {
         "source": "github",
         "repo": "Yoshomura/cartography-plugins",
-        "ref": "cartography-1.1.0"
+        "ref": "2.0.0"
       }
     }
   },
@@ -58,9 +63,9 @@ To declare it for a repository, commit this to that repository's `.claude/settin
 
 The `ref` is what makes the version a property of the **repository** rather than of the
 developer's machine: each repository pins its tag, bumps it alone, and the bump is a reviewable
-commit. Tags are named `<plugin>-<version>`, so a repository using several plugins of this
-marketplace pins one tag and takes the versions of the others as they stand at that tag. Keep marketplace auto-update disabled, otherwise a background refresh walks past the
-pin.
+commit. A tag is a release of the whole marketplace, so a repository using several of its
+plugins pins one tag and takes them all as they stand at that tag. Keep marketplace
+auto-update disabled, otherwise a background refresh walks past the pin.
 
 Two things to know when adopting it:
 
@@ -70,26 +75,7 @@ Two things to know when adopting it:
   local `cartographer.md` and `scout.md` when adopting the plugin, or the plugin's versions
   never take effect.
 
-## The other two plugins
-
-### git-conventions
-
-Commit and pull request conventions, executed by two narrow agents so that neither the staged
-diff nor the branch diff enters the caller's context.
-
-| Component | Name | Role |
-|---|---|---|
-| Agent | `committer` | Writes the message for the staged changes, checks its shape, commits. Never stages, pushes or rewrites history, never commits on the default branch |
-| Agent | `pr-opener` | Writes title and body from the commits, opens or updates the pull request. Requires the branch to be pushed already; never pushes, merges or commits |
-| Skill | `git-conventions:commit-message` | The shape `<type>(<scope>): <gitmoji> <description>`, `+ ` details, `Co-authored-by` attribution, and `scripts/check_message.py` that refuses any other shape |
-| Skill | `git-conventions:create-pr` | The pull request conventions: optional project label, body sections, signature line, never the "Generated with Claude Code" footer |
-
-The pull request label is not hardcoded: it comes from the caller's prompt or from the
-project's `CLAUDE.md`, and a project that declares none gets a pull request without a label.
-
-```
-python "${CLAUDE_PLUGIN_ROOT}/skills/commit-message/scripts/check_message.py" <message file>
-```
+## The other plugin
 
 ### feature-spec
 
@@ -106,15 +92,14 @@ the spec and `docs/archives/<year>/<topic>/notes-before-spec-<topic>.md` for the
 A project overrides them in its `CLAUDE.md`. What happens to a spec afterwards (validation,
 publication, ticket derivation) belongs to the host project.
 
-Install either one the same way as `cartography`:
+Install it the same way as `cartography`:
 
 ```
-/plugin install git-conventions@cartography-plugins
 /plugin install feature-spec@cartography-plugins
 ```
 
-The same override caveat applies: a project's own `.claude/agents/committer.md`,
-`pr-opener.md` or `spec-writer.md` shadows the plugin's version.
+The same override caveat applies: a project's own `.claude/agents/spec-writer.md` shadows
+the plugin's version.
 
 ## The validator
 
@@ -135,7 +120,7 @@ map produced by the wrong version, which pinning alone does not cover.
 
 ## Security scanning
 
-Every push to `main` and every pull request touching `plugins/` runs
+Every push to `master` and every pull request touching `plugins/` runs
 [skill-scanner](https://github.com/cisco-ai-defense/skill-scanner), which looks for prompt
 injection, data exfiltration and malicious code patterns in skill and agent content.
 
@@ -167,40 +152,55 @@ with entirely different business rules, could use it as-is, it carries no busine
 
 ## Versioning
 
-Each plugin's version lives in its own `plugins/<plugin>/.claude-plugin/plugin.json` and
-**nowhere else**. Setting it in the marketplace entry as well would be silently ignored, the
+**Every version is a Semantic Versioning 2.0.0 string**, `MAJOR.MINOR.PATCH` with an optional
+`-prerelease` and `+build`, and no `v` prefix: semver defines the version as `X.Y.Z`, and
+`v1.1.0` is a tag name rather than a version. `.github/scripts/semver.py` validates every one
+and orders them by semver precedence.
+
+Two levels of version, each in one place and nowhere else:
+
+| Version | Lives in | Read by |
+|---|---|---|
+| The repository's | `version` in `.claude-plugin/marketplace.json` | The tag, the release, every `ref` that pins this marketplace |
+| Each plugin's | `version` in `plugins/<plugin>/.claude-plugin/plugin.json` | Claude Code, to decide that an installed plugin changed |
+
+Setting a plugin's version in its marketplace entry as well would be silently ignored, the
 manifest value always winning, and a stale manifest would mask it.
 
 ### The tag is a consequence, not an act
 
-`.github/workflows/release.yml` discovers every manifest under `plugins/*/` on every push to
-`master` and posts the matching `<plugin>-X.Y.Z` tag for each: `cartography-1.1.0`,
-`git-conventions-1.0.0`. The version part is the semantic version itself, with no `v`: semver
-defines a version as `X.Y.Z`, and `v1.1.0` is a tag name rather than a version. The plugin
-name is the prefix that lets several plugins share one repository, each on its own line of
-versions. Nothing in the workflows names a plugin: a new one is covered the day its manifest
-exists. Nobody tags by hand, and a tag that already exists is **never moved**: the job fails
-instead. A repository pinned to a tag must receive the same bytes forever, and a tag that
+A `ref` checks out the whole repository at one commit, so the release unit is the repository.
+`.github/workflows/release.yml` posts its version as the tag, exactly, on every push to
+`master`: `2.0.0`. Nothing in the workflows names a plugin: a new one is covered the day its
+manifest exists. Nobody tags by hand, and a tag that already exists is **never moved**: the job
+fails instead. A repository pinned to a tag must receive the same bytes forever, and a tag that
 slides is the one failure the pin exists to prevent.
 
-The same workflow refuses a pull request that changes `plugins/<plugin>/` while leaving that
-plugin's version alone, and a bump without a `## <plugin> <version>` section in
-`CHANGELOG.md`. Content merged without a bump publishes no tag, so no consuming repository
-can ever reach it — it is merged and unreachable, which is worse than not merged.
+The same workflow refuses a pull request that changes `plugins/<plugin>/` without raising that
+plugin's version, that changes a plugin or the catalog without raising the repository version,
+or that raises the repository version without its `## X.Y.Z` section in `CHANGELOG.md`. Content
+merged without a bump publishes no tag, so no consuming repository can ever reach it: it is
+merged and unreachable, which is worse than not merged.
+
+Before 2.0.0 each plugin was tagged on its own, as `<plugin>-X.Y.Z` (`cartography-1.1.0`,
+`feature-spec-1.0.0`, `git-conventions-1.0.0`), and the single-plugin era left `1.1.0`. Those
+tags stay published and are never moved or reused; they are not semantic versions, and no new
+tag takes that form.
 
 ### Which of the three is a human ruling
 
-The workflow checks that the number exists and that it goes up. It says nothing about its
-level, because the level is a statement about what a repository pinned to the previous tag
-would suffer, and only a person knows that. The criterion is short enough to be read rather
-than debated:
+The workflow checks that each number is semver and goes up. It says nothing about the level,
+because the level is a statement about what a repository pinned to the previous tag would
+suffer, and only a person knows that. A plugin moves by the level of its own change; the
+repository moves by the highest level among the plugins it releases, and a plugin removed from
+the catalog is a major. The criterion is short enough to be read rather than debated:
 
 | Level | What justifies it |
 |---|---|
-| **major** | An agent or a skill removed or renamed, a `${CLAUDE_PLUGIN_ROOT}` path moved, a format change that invalidates artifacts already committed in a consuming repository |
-| **minor** | An agent, a skill, a tool or a format section added, artifacts already committed staying valid |
+| **major** | A plugin, an agent or a skill removed or renamed, a `${CLAUDE_PLUGIN_ROOT}` path moved, a format change that invalidates artifacts already committed in a consuming repository |
+| **minor** | A plugin, an agent, a skill, a tool or a format section added, artifacts already committed staying valid |
 | **patch** | Wording, a comment, a validator fix that changes no format |
 
-The install snippets above carry literal tags. They are documentation, not declarations, so
-nothing breaks the day one drifts. The workflow compares each `ref` to its plugin's manifest
-for that reason.
+The install snippets above carry the tag literally. They are documentation, not declarations,
+so nothing breaks the day one drifts. The workflow checks that each `ref` is the repository
+version for that reason.

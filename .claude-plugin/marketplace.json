@@ -1,9 +1,10 @@
 {
   "name": "cartography-plugins",
+  "version": "2.0.0",
   "owner": {
     "name": "Yoshomura"
   },
-  "description": "Workspace-agnostic Claude Code tooling: cartography of a repository by functionality, git commit and pull request conventions executed by narrow agents, and a challenge-then-interview workflow turning a raw idea into a functional spec.",
+  "description": "Workspace-agnostic Claude Code tooling: cartography of a repository by functionality, and a challenge-then-interview workflow turning a raw idea into a functional spec.",
   "plugins": [
     {
       "name": "cartography",
@@ -15,19 +16,6 @@
         "documentation",
         "hexagonal-architecture",
         "codebase-map"
-      ]
-    },
-    {
-      "name": "git-conventions",
-      "source": "./plugins/git-conventions",
-      "description": "Commit and pull request conventions executed by two narrow agents: committer writes a Conventional Commits + Gitmoji message for the staged changes and commits it after a shape check; pr-opener writes a pull request from the commits and opens or updates it. Neither ever stages, pushes, merges or rewrites history.",
-      "category": "development",
-      "keywords": [
-        "git",
-        "commit",
-        "conventional-commits",
-        "gitmoji",
-        "pull-request"
       ]
     },
     {

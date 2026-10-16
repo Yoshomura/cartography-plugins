@@ -1,9 +1,29 @@
 # Changelog
 
-Released versions, newest first, one section per plugin version, headed `## <plugin> <version>`.
-Each section is the body of that release, published by `.github/workflows/release.yml` under
-the tag `<plugin>-<version>`. The criterion for choosing between major, minor
-and patch is in the [README](README.md#which-of-the-three-is-a-human-ruling).
+Released versions of this repository, newest first, one section per version headed `## X.Y.Z`.
+Each section is the body of the release that `.github/workflows/release.yml` publishes under
+the tag `X.Y.Z`, with one `###` subsection per plugin whose version it introduces or changes.
+Every version is a semantic version. The criterion for choosing between major, minor and patch
+is in the [README](README.md#which-of-the-three-is-a-human-ruling).
+
+The sections headed `## <plugin> <version>` below 2.0.0 come from the per-plugin tags
+`<plugin>-X.Y.Z` used before it; those tags stay published.
+
+## 2.0.0
+
+The marketplace is released as a whole, under one semantic version, and `git-conventions`
+leaves it.
+
+- **One semantic version per repository.** `version` in `.claude-plugin/marketplace.json` is
+  the release, and the tag is that version exactly. Every version, the repository's and each
+  plugin's, is checked as Semantic Versioning 2.0.0 by `.github/scripts/semver.py`. The
+  `<plugin>-X.Y.Z` tags published before stay where they are.
+- **git-conventions removed.** Its `committer` agent and its `commit-message` and `create-pr`
+  skills now come from the `commit-and-pr` plugin of yoshomura-git-managment, where the
+  `pr-manager` agent replaces `pr-opener`; this repository's harness declares it, pinned to
+  `2.1.0`, in `.claude/settings.json`. A repository pinned to
+  `git-conventions-1.0.0` keeps it.
+- **Plugins at this version**, unchanged: cartography 1.1.0, feature-spec 1.0.0.
 
 ## git-conventions 1.0.0
 
