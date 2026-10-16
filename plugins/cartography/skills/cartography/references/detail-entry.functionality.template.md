@@ -3,21 +3,21 @@ kind: detail-entry
 normative: false
 generator: cartographer
 source: functionality
-scenario: <SCENARIO, empty when the usecase answers none>
-usecase: <usecase name, unique across the map and the detail entries, no path and no extension>
+use-case: <USE-CASE identifier from the specification, empty when the implementation answers none>
+implementation: <implementation name, unique across the map and the detail entries, no path and no extension>
 base: <commit sha of this repository at the last pass, empty on a first pass>
 ---
 
-# <SCENARIO> — <title of the scenario>
+# <USE-CASE> — <title of the use case>
 
-> **Observation, not specification.** The scenario says what should happen; this file says
+> **Observation, not specification.** The use case says what should happen; this file says
 > what the functionality does, as observed or described. Divergences are listed at the end,
 > and settled in the specification, not here.
 
 ## What it answers
-> Source: the scenario. Compressed, not inferred.
+> Source: the use case. Compressed, not inferred.
 
-<the need, in the scenario's own terms. Where there is no scenario, say so, hold only what
+<the need, in the use case's own terms. Where there is no use case, say so, hold only what
 the functionality shows, and mark it `?`.>
 
 ## What it does
@@ -29,13 +29,13 @@ screen, a request, a response, a document section.>
 
 ## The rules it applies
 
-| # | Rule | Case |
+| # | Rule | Specified as |
 |---|---|---|
-| 1 | <the rule, in functional terms> | <CASE-ID, or empty> |
+| 1 | <the rule, in functional terms> | <scenario, rule or invariant identifier, or empty> |
 
-<n> rules observed. <n> cases declared in the scenario, <n> covered here, <n> tested.
+<n> rules observed. <n> scenarios declared in the use case, <n> covered here, <n> tested.
 
-An empty cell in the Case column is a finding: carry it down to divergences.
+An empty cell in the Specified as column is a finding: carry it down to divergences.
 
 ## What it needs
 

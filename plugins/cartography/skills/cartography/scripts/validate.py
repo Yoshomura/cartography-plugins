@@ -1,4 +1,4 @@
-"""Validate the shape of the cartography artifacts. Format version 1.1.0.
+"""Validate the shape of the cartography artifacts. Format version 2.0.0.
 
 Checks form, never content. That a file has valid frontmatter, its sections in order and no
 banned word says nothing about whether the map is right: what it says is inferred and stays
@@ -11,11 +11,15 @@ Exit code 0 when every file passes, 1 otherwise. Warnings never fail the run.
 Cartography is reverse engineering, whatever the technology, and it has two sources, declared
 by the optional `source` frontmatter key (`code` when the key is absent):
 
-- `code`: existing code, in any language. The usecase is a file path in that codebase.
+- `code`: existing code, in any language. The implementation is a file path in that codebase.
 - `functionality`: a functionality observed or described, with no code to read (a product
-  studied from the outside, a user interface, a specification, documentation). The usecase is
-  a plain name, unique in the set, never a path: a path to a file that does not exist would be
-  an invention.
+  studied from the outside, a user interface, a specification, documentation). The
+  implementation is a plain name, unique in the set, never a path: a path to a file that does
+  not exist would be an invention.
+
+The specification the artifacts are compared with is organized by feature and use case: a
+detail entry is named after a use case identifier, and its rules point at the identifier of a
+scenario, a rule or an invariant of that specification.
 """
 
 import io
@@ -23,7 +27,7 @@ import os
 import re
 import sys
 
-FORMAT_VERSION = "1.1.0"
+FORMAT_VERSION = "2.0.0"
 
 CODE = "code"
 FUNCTIONALITY = "functionality"
@@ -40,24 +44,24 @@ BLOCKQUOTE = {
     CODE: {
         "map": MAP_BLOCKQUOTE,
         "detail-entry": (
-            "> **Observation, not specification.** The scenario says what should happen; this file says\n"
+            "> **Observation, not specification.** The use case says what should happen; this file says\n"
             "> what the code does. Divergences are listed at the end, and settled in the specification,\n"
             "> not here."
         ),
         "refusal-surface": (
-            "> **Observation, not specification.** The refusal is specified in the scenario; its mechanism\n"
+            "> **Observation, not specification.** The refusal is specified in the use case; its mechanism\n"
             "> is decided in the code and only observed here. Divergences are listed at the end."
         ),
     },
     FUNCTIONALITY: {
         "map": MAP_BLOCKQUOTE,
         "detail-entry": (
-            "> **Observation, not specification.** The scenario says what should happen; this file says\n"
+            "> **Observation, not specification.** The use case says what should happen; this file says\n"
             "> what the functionality does, as observed or described. Divergences are listed at the end,\n"
             "> and settled in the specification, not here."
         ),
         "refusal-surface": (
-            "> **Observation, not specification.** The refusal is specified in the scenario; what the\n"
+            "> **Observation, not specification.** The refusal is specified in the use case; what the\n"
             "> functionality shows when it refuses is only observed here. Divergences are listed at the end."
         ),
     },
@@ -65,18 +69,18 @@ BLOCKQUOTE = {
 
 SOURCE_LINES = {
     CODE: [
-        "> Source: the scenario. Compressed, not inferred.",
+        "> Source: the use case. Compressed, not inferred.",
         "> Source: the code. Observed, not interpreted.",
     ],
     FUNCTIONALITY: [
-        "> Source: the scenario. Compressed, not inferred.",
+        "> Source: the use case. Compressed, not inferred.",
         "> Source: the functionality. Observed, not interpreted.",
     ],
 }
 
 REQUIRED_KEYS = {
     "map": ["kind", "normative", "generator", "repository", "base"],
-    "detail-entry": ["kind", "normative", "generator", "scenario", "usecase", "base"],
+    "detail-entry": ["kind", "normative", "generator", "use-case", "implementation", "base"],
     "refusal-surface": ["kind", "normative", "generator", "repository", "base"],
 }
 
@@ -85,7 +89,7 @@ REQUIRED_KEYS = {
 OPTIONAL_KEYS = ["source"]
 
 SECTIONS = {
-    "map": ["Usecases", "Inbound", "Outbound", "Anchors", "Unattached"],
+    "map": ["Use cases", "Inbound", "Outbound", "Anchors", "Unattached"],
     "detail-entry": [
         "What it answers",
         "What it does",
@@ -125,7 +129,7 @@ BANNED = [
 FRONTMATTER_LINE = re.compile(r"^[a-z][a-z-]*:( .+)?$")
 COUNTER = re.compile(r"^\d+/\d+/\d+$")
 SHA = re.compile(r"\b[0-9a-f]{7,40}\b")
-FOREIGN_SCENARIO_PATH = re.compile(r"docs/[a-z0-9-]+/scenarios/")
+FOREIGN_SPECIFICATION_PATH = re.compile(r"docs/specifications/")
 
 # A file path in any language: a file name with an extension, optionally under folders. The
 # language is not checked, and neither is the existence of the file.
@@ -151,40 +155,40 @@ def source_of(keys):
     return keys.get("source") or CODE
 
 
-def usecase_key(value):
-    """The identity of a usecase name: backticks and spaces trimmed, case ignored."""
+def implementation_key(value):
+    """The identity of an implementation name: backticks and spaces trimmed, case ignored."""
     return value.strip().strip("`").strip().casefold()
 
 
 def report_duplicates(names, path, where, report):
-    """Report every usecase name met more than once. `names` is a list of raw values."""
+    """Report every implementation name met more than once. `names` is a list of raw values."""
     seen = {}
     for name in names:
-        seen.setdefault(usecase_key(name), []).append(name.strip().strip("`").strip())
+        seen.setdefault(implementation_key(name), []).append(name.strip().strip("`").strip())
     for key in sorted(seen):
         if key and len(seen[key]) > 1:
             report.error(
                 path,
-                "the usecase name %r appears %d times %s: with source functionality a usecase name is unique"
+                "the implementation name %r appears %d times %s: with source functionality an implementation name is unique"
                 % (seen[key][0], len(seen[key]), where),
             )
 
 
-def usecase_problem(value, source):
-    """Return why a usecase value does not fit its source, or None when it fits.
+def implementation_problem(value, source):
+    """Return why an implementation value does not fit its source, or None when it fits.
 
-    Code: a file path with an extension, any language. Functionality: a plain usecase name, and
+    Code: a file path with an extension, any language. Functionality: a plain implementation name, and
     anything that looks like a path is refused, since there is no file for it to name.
     """
     value = value.strip().strip("`").strip()
     if source == FUNCTIONALITY:
         if not value:
-            return "with source functionality the usecase is a name, and it is empty"
+            return "with source functionality the implementation is a name, and it is empty"
         if "/" in value or "\\" in value or FILE_EXTENSION.search(value):
-            return "with source functionality the usecase is a plain name, never a file path"
+            return "with source functionality the implementation is a plain name, never a file path"
         return None
     if "://" in value or not FILE_PATH.match(value):
-        return "with source code the usecase must be a file path with an extension"
+        return "with source code the implementation must be a file path with an extension"
     return None
 
 
@@ -234,23 +238,24 @@ def check_frontmatter(keys, path, report):
         report.error(path, "generator must be 'cartographer', found %r" % keys.get("generator"))
 
     if kind == "detail-entry":
-        usecase = keys.get("usecase", "")
-        # An empty usecase path stays tolerated with source code, as it always was. A usecase
-        # name is always known with source functionality: it is part of the specification.
-        if usecase or source == FUNCTIONALITY:
-            problem = usecase_problem(usecase, source)
+        implementation = keys.get("implementation", "")
+        # An empty implementation path stays tolerated with source code, as it always was. An
+        # implementation name is always known with source functionality: it is part of the
+        # specification.
+        if implementation or source == FUNCTIONALITY:
+            problem = implementation_problem(implementation, source)
             if problem:
-                report.error(path, "%s, found %r" % (problem, usecase))
-        if not keys.get("scenario"):
-            report.warn(path, "scenario is empty: this usecase answers none, expected in the map too")
+                report.error(path, "%s, found %r" % (problem, implementation))
+        if not keys.get("use-case"):
+            report.warn(path, "use-case is empty: this implementation answers none, expected in the map too")
 
     # Nothing locating another repository belongs in the frontmatter.
     for key, value in keys.items():
         if key == "base":
             continue
-        if FOREIGN_SCENARIO_PATH.search(value):
+        if FOREIGN_SPECIFICATION_PATH.search(value):
             report.error(path, "key %r carries a path into the documentation repository" % key)
-        if key != "usecase" and SHA.fullmatch(value or ""):
+        if key != "implementation" and SHA.fullmatch(value or ""):
             report.error(path, "key %r carries a bare commit SHA of a foreign repository" % key)
 
     return kind
@@ -301,28 +306,28 @@ def table_rows(body, heading):
 
 
 def check_map(body, source, path, report, linked):
-    rows = table_rows(body, "Usecases")
+    rows = table_rows(body, "Use cases")
     if source == FUNCTIONALITY:
-        report_duplicates([c[2] for c in rows if len(c) == 4], path, "in the Usecases table", report)
+        report_duplicates([c[2] for c in rows if len(c) == 4], path, "in the Use cases table", report)
     if not rows:
-        report.warn(path, "the Usecases table holds no row")
+        report.warn(path, "the Use cases table holds no row")
     for cells in rows:
         if len(cells) != 4:
-            report.error(path, "a Usecases row has %d columns, expected 4" % len(cells))
+            report.error(path, "a Use cases row has %d columns, expected 4" % len(cells))
             continue
-        scenario, counter, usecase, summary = cells
+        use_case, counter, implementation, summary = cells
         if not COUNTER.match(counter):
-            report.error(path, "Cases must read declared/covered/tested, found %r" % counter)
-        problem = usecase_problem(usecase, source)
+            report.error(path, "Scenarios must read declared/covered/tested, found %r" % counter)
+        problem = implementation_problem(implementation, source)
         if problem:
-            report.error(path, "the Usecase column: %s, found %r" % (problem, usecase))
+            report.error(path, "the Implementation column: %s, found %r" % (problem, implementation))
         if len(summary) > 120:
             report.error(path, "the summary is %d characters, 120 at most: %r" % (len(summary), summary[:60]))
-        link = re.search(r"\]\((details/[^)]+\.md)\)", scenario)
+        link = re.search(r"\]\((details/[^)]+\.md)\)", use_case)
         if link:
             linked.add(link.group(1))
         else:
-            report.error(path, "the Scenario column must link to its detail entry, found %r" % scenario)
+            report.error(path, "the Use case column must link to its detail entry, found %r" % use_case)
 
     if source == FUNCTIONALITY:
         # No tree to hash for an observed functionality: the anchor is the observation date.
@@ -425,15 +430,15 @@ def main(argv):
             if sources[path] and sources[path] != set_source:
                 report.error(path, "source is %r while the map declares %r" % (sources[path], set_source))
 
-    # With source functionality the usecase name is the usecase's only identity: two detail
-    # entries naming the same usecase are two descriptions of one thing.
+    # With source functionality the implementation name is the implementation's only identity:
+    # two detail entries naming the same implementation are two descriptions of one thing.
     if set_source == FUNCTIONALITY:
         names = [
-            frontmatters[p].get("usecase", "")
+            frontmatters[p].get("implementation", "")
             for p in details
             if frontmatters.get(p) and frontmatters[p].get("kind") == "detail-entry"
         ]
-        report_duplicates(names, details_dir, "across the detail entries' usecase keys", report)
+        report_duplicates(names, details_dir, "across the detail entries' implementation keys", report)
 
     # Every detail entry is reachable from the map, and every link resolves.
     on_disk = set(os.path.relpath(p, root).replace(os.sep, "/") for p in details)

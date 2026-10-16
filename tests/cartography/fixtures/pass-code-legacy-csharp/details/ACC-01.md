@@ -2,19 +2,19 @@
 kind: detail-entry
 normative: false
 generator: cartographer
-scenario: ACC-01
-usecase: src/Sample.Hexagon/Application/SignInUseCase.cs
+use-case: ACC-01
+implementation: src/Sample.Hexagon/Application/SignInUseCase.cs
 base: 1a2b3c4d
 ---
 
-# ACC-01 — Sample scenario
+# ACC-01 — Sample use case
 
-> **Observation, not specification.** The scenario says what should happen; this file says
+> **Observation, not specification.** The use case says what should happen; this file says
 > what the code does. Divergences are listed at the end, and settled in the specification,
 > not here.
 
 ## What it answers
-> Source: the scenario. Compressed, not inferred.
+> Source: the use case. Compressed, not inferred.
 
 A member gets access to the private area.
 
@@ -25,13 +25,13 @@ The account is checked against the stored credentials, then a session opens.
 
 ## The rules it applies
 
-| # | Rule | Case |
+| # | Rule | Specified as |
 |---|---|---|
-| 1 | An unknown account is refused | CASE-1 |
+| 1 | An unknown account is refused | ACC-01-SCENARIO-1 |
 
-1 rules observed. 1 cases declared in the scenario, 1 covered here, 0 tested.
+1 rules observed. 1 scenarios declared in the use case, 1 covered here, 0 tested.
 
-An empty cell in the Case column is a finding: carry it down to divergences.
+An empty cell in the Specified as column is a finding: carry it down to divergences.
 
 ## What it needs
 

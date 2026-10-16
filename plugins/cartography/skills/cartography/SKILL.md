@@ -1,12 +1,12 @@
 ---
 name: cartography
-description: The format of this repository's cartography artifacts - map.md, details/<SCENARIO>.md and refusals.md - with their templates and a validator. Cartography is reverse engineering of an existing system, from its code in any language or from a functionality observed or described. Use when writing, refreshing or reviewing any of those three files, and to check that a set of them still conforms.
+description: The format of this repository's cartography artifacts - map.md, details/<USE-CASE>.md and refusals.md - with their templates and a validator. Cartography is reverse engineering of an existing system, from its code in any language or from a functionality observed or described, compared with a specification organized by feature, use case, scenario, rule and invariant. Use when writing, refreshing or reviewing any of those three files, and to check that a set of them still conforms.
 license: MIT
 ---
 
 # Cartography format
 
-**Format version 1.1.0.** Business-agnostic and technology-agnostic: no domain term, no
+**Format version 2.0.0.** Business-agnostic and technology-agnostic: no domain term, no
 language and no folder convention appears in this skill or in its templates.
 
 This skill holds the **shape** of the three cartography artifacts. It does not hold the
@@ -17,7 +17,7 @@ is prose and moves rarely.
 | File | What it answers |
 |---|---|
 | `docs/map.md` | Where is what, what enters, what leaves |
-| `docs/details/<SCENARIO>.md` | What one usecase does, and the rules it applies |
+| `docs/details/<USE-CASE>.md` | What the implementation of one use case does, and the rules it applies |
 | `docs/refusals.md` | What comes back when this deployable says no |
 
 ## Two sources, one format
@@ -26,10 +26,10 @@ Cartography is reverse engineering: it describes a system that already exists, f
 be observed of it. The frontmatter key `source` says what was observed, and one set shares one
 source.
 
-| `source` | Observed | The usecase is |
+| `source` | Observed | The implementation is |
 |---|---|---|
-| `code` (the value when the key is absent) | existing code, any language | the path of the **existing** file implementing it, never a file to create |
-| `functionality` | a product studied from the outside, a user interface, network traffic, a specification, documentation | a usecase **name**, unique in the set, never a path |
+| `code` (the value when the key is absent) | existing code, any language | the path of the **existing** file implementing the use case, never a file to create |
+| `functionality` | a product studied from the outside, a user interface, network traffic, a specification, documentation | an implementation **name**, the title of the use case, unique in the set, never a path |
 
 ## Writing or refreshing one
 
@@ -61,7 +61,7 @@ documentation folder.
 Exit 0 when everything conforms, 1 otherwise. It reports missing or unexpected frontmatter
 keys, an unknown `source` or one that differs from the map's, a frontmatter field that locates
 another repository, a reworded blockquote or source line, sections renamed or out of order, a
-malformed case counter, a usecase that is not a file path (source `code`) or that is a path or
+malformed scenario counter, an implementation that is not a file path (source `code`) or that is a path or
 a duplicate name (source `functionality`), a malformed anchor (source `functionality`), a
 summary over 120 characters, an unknown refusal mechanism, a detail entry no map row links to,
 and any banned vocabulary.
@@ -78,6 +78,6 @@ No purpose, no judgment, no completion. `What it answers` is where the specifica
 `references/format.md` lists the banned vocabulary and the validator enforces it. The
 judgment behind it belongs to the `cartographer` agent this plugin also ships.
 
-**Nothing locating another repository.** No path into the documentation repository, no commit
-SHA of it. The scenario ID is the whole cross-repository coordinate, and it is the join key
+**Nothing locating another repository.** No path into the specification, no commit
+SHA of it. The use case identifier is the whole cross-repository coordinate, and it is the join key
 for whoever holds both.

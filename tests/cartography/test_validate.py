@@ -19,17 +19,27 @@ FIXTURES = os.path.join(HERE, "fixtures")
 # Each failing fixture, with a fragment of every error it must report.
 EXPECTED_ERRORS = {
     "fail-functionality-with-paths": [
-        "with source functionality the usecase is a plain name, never a file path, found '`src/account/SignIn.cs`'",
-        "with source functionality the usecase is a plain name, never a file path, found 'SignIn.ts'",
+        "with source functionality the implementation is a plain name, never a file path, found '`src/account/SignIn.cs`'",
+        "with source functionality the implementation is a plain name, never a file path, found 'SignIn.ts'",
         "an anchor reads '2026-10-15'",
         "missing the source-functionality line",
     ],
     "fail-functionality-duplicate-name": [
-        "the usecase name 'Sign in' appears 2 times in the Usecases table",
-        "the usecase name 'Sign in' appears 2 times across the detail entries' usecase keys",
+        "the implementation name 'Sign in' appears 2 times in the Use cases table",
+        "the implementation name 'Sign in' appears 2 times across the detail entries' implementation keys",
+    ],
+    "fail-pre-2-vocabulary": [
+        "sections are ['Usecases', 'Inbound', 'Outbound', 'Anchors', 'Unattached']",
+        "frontmatter is missing the key 'use-case'",
+        "frontmatter is missing the key 'implementation'",
+        "frontmatter carries the unexpected key 'scenario'",
+        "frontmatter carries the unexpected key 'usecase'",
+        "with source functionality the implementation is a name, and it is empty",
+        "details/ACC-01.md: is linked from no row of the map",
+        "details/ACC-02.md: is linked from no row of the map",
     ],
     "fail-code-malformed": [
-        "with source code the usecase must be a file path with an extension, found 'Sign in'",
+        "with source code the implementation must be a file path with an extension, found 'Sign in'",
         "source is 'functionality' while the map declares 'code'",
     ],
 }

@@ -2,7 +2,7 @@
   "name": "cartography",
   "displayName": "Cartography",
   "version": "2.0.0",
-  "description": "Reverse engineers an existing system into a functional cartography, from its code in any language or from a functionality observed or described: an index of what lives where, one detail entry per usecase, and the refusal surface. Ships the cartographer and scout agents, the format specification with one template set per source, and a validator that checks the shape of what they produce.",
+  "description": "Reverse engineers an existing system into a functional cartography, from its code in any language or from a functionality observed or described: an index of what lives where, one detail entry per use case, and the refusal surface. Ships the cartographer and scout agents, the format specification with one template set per source, and a validator that checks the shape of what they produce.",
   "author": {
     "name": "Yoshomura"
   },

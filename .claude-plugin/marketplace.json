@@ -8,7 +8,7 @@
     {
       "name": "cartography",
       "source": "./plugins/cartography",
-      "description": "Reverse engineers an existing system into a functional cartography, from its code in any language or from a functionality observed or described: an index of what lives where, one detail entry per usecase, and the refusal surface. Ships the cartographer and scout agents, the format specification with its templates, and a validator.",
+      "description": "Reverse engineers an existing system into a functional cartography, from its code in any language or from a functionality observed or described: an index of what lives where, one detail entry per use case, and the refusal surface. Ships the cartographer and scout agents, the format specification with its templates, and a validator.",
       "category": "documentation",
       "keywords": [
         "cartography",
@@ -34,7 +34,7 @@
     {
       "name": "feature-spec",
       "source": "./plugins/feature-spec",
-      "description": "Turns a raw product idea into a functional spec through a mandatory challenge, then interview, then write sequence. Ships the spec-writer agent and the workflow-feature-spec skill with its template. Never invents a missing fact, never settles an open reflection, never publishes anywhere.",
+      "description": "Turns a raw product idea into one feature of a functional specification organized by feature and use case, through a mandatory challenge, then interview, then write sequence. Ships the spec-writer agent and the workflow-feature-spec skill with its feature and use case templates. Never invents a missing fact, never settles an open reflection, never publishes anywhere.",
       "category": "documentation",
       "keywords": [
         "specification",

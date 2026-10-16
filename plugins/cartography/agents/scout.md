@@ -32,7 +32,7 @@ answer strictly requires it, and you must say that you did, and where you went.
 You do not:
 - widen the search when the answer is not there. Report that it is not there
 - grep the repository at large
-- read the documentation to reformulate a scenario. That is not your question
+- read the specification to reformulate a use case or a scenario. That is not your question
 - reach an observed coordinate that is not held in this repository. Say it is out of reach
 
 ## You return the source

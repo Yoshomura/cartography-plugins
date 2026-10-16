@@ -9,7 +9,7 @@ base: 1a2b3c4d
 
 # Refusals — sample
 
-> **Observation, not specification.** The refusal is specified in the scenario; what the
+> **Observation, not specification.** The refusal is specified in the use case; what the
 > functionality shows when it refuses is only observed here. Divergences are listed at the end.
 
 ## Mechanisms
@@ -19,14 +19,14 @@ base: 1a2b3c4d
 | Business exception | Raised by the business logic, translated by an inbound adapter |
 | Returned outcome | No exception: the treatment returns a state the adapter turns into a refusal |
 | Silent no-op | No exception, no signal: the treatment decides not to act |
-| Adapter | Never reaches the usecase: contract, routing, authorization |
+| Adapter | Never reaches the use case: contract, routing, authorization |
 
 ## Business refusals
 
-| Refusal | Mechanism | Exception | Code | Cases | Usecases | Raised in | Caller sees |
+| Refusal | Mechanism | Exception | Code | Specified as | Use cases | Raised in | Caller sees |
 |---|---|---|---|---|---|---|---|
-| Unknown account | Business exception | — | — | CASE-1 | ACC-01 | Sign in | An error message |
-| Empty form | Returned outcome | — | — | CASE-2 | ACC-01 | Sign in | The form again |
+| Unknown account | Business exception | — | — | ACC-01-SCENARIO-1 | ACC-01 | Sign in | An error message |
+| Empty form | Returned outcome | — | — | ACC-02-SCENARIO-1 | ACC-01 | Sign in | The form again |
 
 ## Adapter refusals
 

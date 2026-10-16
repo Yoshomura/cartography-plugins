@@ -12,23 +12,23 @@ base: 1a2b3c4d
 > **Not normative, and inferred.** Where things are, never what they should be. `?` marks an
 > uncertain link, and nothing here is ever a blocking CI gate.
 
-Behavior lives in `details/<SCENARIO>.md`, the refusal surface in `refusals.md`, code nowhere.
+Behavior lives in `details/<USE-CASE>.md`, the refusal surface in `refusals.md`, code nowhere.
 
-## Usecases
+## Use cases
 
-| Scenario | Cases | Usecase | What it answers |
+| Use case | Scenarios | Implementation | What it answers |
 |---|---|---|---|
 | [ACC-01](details/ACC-01.md) | 1/1/0 | `src/account/SignIn.cs` | A member gets access to the private area |
 
 ## Inbound
 
-| Trigger | Nature | Usecases | Where observed |
+| Trigger | Nature | Use cases | Where observed |
 |---|---|---|---|
 | Sign-in form | UI | ACC-01 | Sign-in screen |
 
 ## Outbound
 
-| What goes out | Nature | Usecases | Where observed |
+| What goes out | Nature | Use cases | Where observed |
 |---|---|---|---|
 | Confirmation mail | Notification | ACC-01 | Mailbox of the account |
 
