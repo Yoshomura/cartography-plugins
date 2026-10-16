@@ -1,0 +1,14 @@
+{
+  "extraKnownMarketplaces": {
+    "yoshomura-git-managment": {
+      "source": {
+        "source": "github",
+        "repo": "Yoshomura/yoshomura-git-managment",
+        "ref": "2.1.0"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "commit-and-pr@yoshomura-git-managment": true
+  }
+}
