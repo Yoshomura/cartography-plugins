@@ -1,2 +1,3 @@
 *.sarif
 *-report.html
+__pycache__/

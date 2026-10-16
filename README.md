@@ -6,25 +6,40 @@ own section further down.
 
 ## What the plugin does
 
-It maps a repository by **functionality**, not by code, and it produces three artifacts that
-answer three questions asked at three different moments:
+It reverse engineers an existing system and maps it by **functionality**, not by code, and it
+produces three artifacts that answer three questions asked at three different moments:
 
 | Artifact | Question | Read |
 |---|---|---|
 | `docs/map.md` | Where is what, what enters, what leaves | Whole, for impact analysis |
-| `docs/details/<SCENARIO>.md` | What one usecase does, and the rules it applies | One at a time, when designing |
+| `docs/details/<USE-CASE>.md` | What the implementation of one use case does, and the rules it applies | One at a time, when designing |
 | `docs/refusals.md` | What comes back when the deployable says no | Whole, when integrating |
 
-They are committed and **not normative**. The documentation of the system stays the source of
+They are committed and **not normative**. The specification of the system stays the source of
 truth; these are measuring instruments, and each says so in its own header.
+
+The specification they are compared with is organized by **feature** (a functionality) and
+**use case** (one goal reached by one means), each use case holding its **scenarios** and
+**rules**, each feature its **invariants**, all with fixed identifiers such as
+`SIGNIN-PASSKEY-SCENARIO-2`. The `feature-spec` plugin writes that specification.
+
+The system is read from one of two sources, declared by the `source` key of every artifact and
+equal variants of the same reverse engineering:
+
+| `source` | What is read | The implementation is |
+|---|---|---|
+| `code` | Existing code, in any language and any folder layout | the path of the existing file implementing the use case |
+| `functionality` | A functionality observed or described: a product studied from the outside, a user interface, network traffic, a specification, documentation | a name, the title of the use case, unique in the set |
+
+An absent `source` reads `code`.
 
 ## What it ships
 
 | Component | Name | Role |
 |---|---|---|
 | Agent | `cartographer` | The judgment: what to attach to what, what to report, what never to write |
-| Agent | `scout` | A lookup at one coordinate, answering one question, returning code |
-| Skill | `cartography:cartography` | The format: specification, templates, validator |
+| Agent | `scout` | A lookup at one coordinate, answering one question, returning code or the observed evidence |
+| Skill | `cartography:cartography` | The format: specification, one template set per source, validator |
 
 The agent and the skill are separated on purpose. A shape reproduced from memory drifts run
 after run until two repositories stop being comparable; judgment cannot be templated at all.
@@ -46,7 +61,7 @@ To declare it for a repository, commit this to that repository's `.claude/settin
       "source": {
         "source": "github",
         "repo": "Yoshomura/cartography-plugins",
-        "ref": "cartography-1.1.0"
+        "ref": "cartography-2.0.0"
       }
     }
   },
@@ -93,18 +108,34 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/commit-message/scripts/check_message.py" <m
 
 ### feature-spec
 
-A raw product idea becomes a functional spec through a mandatory sequence: mode selection
-(interactive or silent), challenge, interview, write.
+A raw product idea becomes one feature of the functional specification through a mandatory
+sequence: mode selection (interactive or silent), challenge, interview, write.
 
 | Component | Name | Role |
 |---|---|---|
 | Agent | `spec-writer` | The conception agent. Grounds the idea in the project's reference material, never invents a missing fact, never settles an open reflection, never publishes |
-| Skill | `feature-spec:workflow-feature-spec` | The sequence, the hard rules, the checklist, and `references/spec.template.md` |
+| Skill | `feature-spec:workflow-feature-spec` | The vocabulary, the sequence, the hard rules, the checklist, and the templates `references/feature.template.md` and `references/use-case.template.md` |
 
-Default paths are `docs/Features TODO/` for the idea inbox, `docs/specs/spec-<topic>.md` for
-the spec and `docs/archives/<year>/<topic>/notes-before-spec-<topic>.md` for the archived idea.
-A project overrides them in its `CLAUDE.md`. What happens to a spec afterwards (validation,
-publication, ticket derivation) belongs to the host project.
+The specification is organized by feature and use case:
+
+```
+docs/specifications/
+├── features.md                       index of the features
+└── sign-in/                          one folder per feature
+    ├── sign-in.md                    goal, facts, invariants, use cases, decisions, open questions
+    └── sign-in-with-passkey.md       one file per use case: goal, rules, scenarios
+```
+
+A use case is one goal reached by one means: two means of reaching the same goal are two use
+cases. Invariants, rules and scenarios carry fixed identifiers in full words
+(`SIGNIN-INVARIANT-1`, `SIGNIN-PASSKEY-RULE-1`, `SIGNIN-PASSKEY-SCENARIO-2`), and tests start
+with the identifier they cover.
+
+Default paths are `docs/Features TODO/` for the idea inbox, `docs/specifications/<feature>/`
+for the specification and `docs/archives/<year>/<feature>/notes-before-spec-<feature>.md` for
+the archived idea. A project overrides them in its `CLAUDE.md` or `AGENTS.md`. What happens to
+a specification afterwards (validation, publication, ticket derivation) belongs to the host
+project.
 
 Install either one the same way as `cartography`:
 
@@ -123,9 +154,17 @@ python "${CLAUDE_PLUGIN_ROOT}/skills/cartography/scripts/validate.py" docs
 ```
 
 It checks the **form**, never the content: frontmatter keys, a header blockquote copied
-character for character, sections present and in order, the case counter, the summary length,
-the refusal mechanisms, orphan detail entries, and a list of banned vocabulary — purpose,
-judgment and supposition, the three ways an observation turns into an invention.
+character for character from the set of the file's source, sections present and in order, the
+scenario counter, the implementation (a file path of any language with source `code`, a unique
+plain name with source `functionality`), the anchors of an observed functionality, the summary length, the
+refusal mechanisms, orphan detail entries, and a list of banned vocabulary — purpose, judgment
+and supposition, the three ways an observation turns into an invention.
+
+Its fixtures live in `tests/cartography/fixtures/`, one folder per set, `pass-*` or `fail-*`:
+
+```
+python -m unittest discover -s tests/cartography -v
+```
 
 Exit 0 when everything conforms, 1 otherwise.
 
@@ -159,11 +198,12 @@ ingests it, and there is none.
 
 ⚠️ Best-effort detection. A scan returning nothing does not mean the plugin is free of threats.
 
-## Business-agnostic, by construction
+## Business- and technology-agnostic, by construction
 
-No domain term appears in the plugin or in its templates. That is deliberate and it is the
-criterion the architecture it serves sets for a shared technical library: if another company,
-with entirely different business rules, could use it as-is, it carries no business rule.
+No domain term appears in the plugin or in its templates, and no language, framework or folder
+convention either. That is deliberate and it is the criterion the architecture it serves sets
+for a shared technical library: if another company, with entirely different business rules and
+another stack, could use it as-is, it carries no business rule and no technology choice.
 
 ## Versioning
 
