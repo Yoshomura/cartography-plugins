@@ -26,7 +26,7 @@ Use these terms and no other, in the conversation as in the files:
 | **Feature** | A functionality | `SIGNIN` |
 | **Use case** | One goal reached by one means. Two means of reaching the same goal are two use cases, never two scenarios of one use case | `SIGNIN-PASSKEY` |
 | **Scenario** | One way a use case unfolds: nominal, variant or failure. It is a worked example | `SIGNIN-PASSKEY-SCENARIO-2` |
-| **Rule** | A rule of one use case, written in that use case even when another use case states the same rule today | `SIGNIN-PASSKEY-RULE-1` |
+| **Business rule** | A rule of one use case, written in that use case even when another use case states the same business rule today. Never "rule" alone | `SIGNIN-PASSKEY-BUSINESS-RULE-1` |
 | **Invariant** | A rule of the feature whose divergence between its use cases would be a defect: security, personal data, accessibility. Written once, in the feature | `SIGNIN-INVARIANT-1` |
 
 Identifiers are upper case, in full words, fixed: renaming a title never changes an identifier,
@@ -113,11 +113,11 @@ would have asked into an Open questions entry as defined in Phase 0.
 
 In interactive mode: one question at a time, each with proposed options and a recommendation
 when one is defensible. Continue until zero ambiguity remains on the use cases (one per means
-of reaching a goal), their rules, their scenarios (nominal, variants, failures, each with
+of reaching a goal), their business rules, their scenarios (nominal, variants, failures, each with
 validated values), the invariants of the feature, and scope boundaries. Three hard rules:
 
 - **Never fill a gap with a plausible assumption.** A gap is either a question to the user or
-  an entry in the Open questions sections, never an invented rule presented as acquired.
+  an entry in the Open questions sections, never an invented business rule presented as acquired.
 - **Never settle an open reflection.** Present the options with a short recommendation and let
   the human choose.
 - **Every decision lands in the Decisions log**, phrased as the user settled it.
@@ -131,23 +131,34 @@ Fill the feature file from `feature.template.md` and one file per use case from
 
 - **Use cases**: one goal reached by one means per file. Two means of reaching the same goal are
   two use case files, never two scenarios of one.
-- **Rules**: one sentence each, in the use case they belong to, with an identifier
-  `<USE-CASE>-RULE-<n>`. A rule two use cases share today is written in both: it is not moved
-  to the feature.
+- **Business rules**: one sentence each, in the use case they belong to, with an identifier
+  `<USE-CASE>-BUSINESS-RULE-<n>`. A business rule two use cases share today is written in
+  both: it is not moved to the feature. Never write "rule" alone: a rule is also an
+  instruction file of a coding agent harness.
 - **Invariants**: only a rule whose divergence between the use cases would be a defect
   (security, personal data, accessibility), written once in the feature file with an
-  identifier `<FEATURE>-INVARIANT-<n>`. When in doubt, it is a rule of each use case, and the
-  question goes to the user.
-- **Scenarios**: every non-trivial rule is illustrated by a scenario using values the user
-  validated (in silent mode: plausible placeholder values, flagged as an Open questions entry
-  for validation). Nominal path first, then variants and failures. Edge cases are failure or
-  variant scenarios, not a separate table.
+  identifier `<FEATURE>-INVARIANT-<n>`. When in doubt, it is a business rule of each use case,
+  and the question goes to the user.
+- **Scenarios**: every non-trivial business rule is illustrated by a scenario using values the
+  user validated (in silent mode: plausible placeholder values, flagged as an Open questions
+  entry for validation). Nominal path first, then variants and failures. Edge cases are
+  failure or variant scenarios, not a separate table. Each scenario carries a short title in
+  its heading, one sentence of 120 characters at most, usable as the title of a ticket, and its
+  Given / When / Then in a `gherkin` block. The Given / When / Then says what the sentence says
+  and nothing more; when it cannot be written without adding information, the gap becomes an
+  open question.
+- **Check**: run the checker on the feature folder before finishing, and fix every problem it
+  reports:
+
+  ```
+  python "${CLAUDE_PLUGIN_ROOT}/skills/workflow-feature-spec/scripts/check_specification.py" <feature folder>
+  ```
 - **Identifiers**: upper case, full words, never renamed, never reused, numbered in the order
   written. An existing identifier keeps its number when its text changes.
 - No prose padding anywhere.
-- Facts are separated from decided rules, each fact with its source.
+- Facts are separated from decided business rules, each fact with its source.
 - Fact labels are human-readable: write `**Fact 1**`, `**Fact 2**`… never the abbreviated
-  form `**F1**`, in the Facts section and in every cross-reference (rules, decisions log,
+  form `**F1**`, in the Facts section and in every cross-reference (business rules, decisions log,
   scenarios).
 - A source that has a URL is cited as a clickable markdown hyperlink, `[Title](URL)`, never as
   a bare title plus an identifier. Use the URL the source was provided with; never invent one.
@@ -176,9 +187,11 @@ skill's concern.
 - [ ] Silent mode: open questions posed to the user in one round after the specification files are
       complete; answers integrated, unanswered entries left in Open questions
 - [ ] Exactly one idea in scope, one feature written or changed
-- [ ] One use case file per means of reaching a goal; rules in their use case; invariants
+- [ ] One use case file per means of reaching a goal; business rules in their use case; invariants
       only for divergences that would be a defect
-- [ ] Every invariant, rule and scenario carries its fixed identifier in full words
+- [ ] Every invariant, business rule and scenario carries its fixed identifier in full words
+- [ ] Every scenario has a sentence of 120 characters at most and its Given / When / Then
+- [ ] `check_specification.py` passes on the feature folder
 - [ ] Feature row added or updated in the index of the features
 - [ ] Challenge presented before the first detail question (silent mode: conducted internally,
       outcome in the Decisions log)
@@ -188,7 +201,7 @@ skill's concern.
 - [ ] Every source with a URL cited as a markdown hyperlink `[Title](URL)`
 - [ ] Every fact reads as the final consolidated state on its own: no correction trail,
       no addendum facts; change history lives in the Decisions log only
-- [ ] Each non-trivial rule is illustrated by a scenario with user-validated values
+- [ ] Each non-trivial business rule is illustrated by a scenario with user-validated values
 - [ ] Open questions listed honestly, none silently resolved
 - [ ] Project glossary and naming conventions applied when declared
 - [ ] Source idea archived verbatim and removed from its source inbox file, nothing else touched

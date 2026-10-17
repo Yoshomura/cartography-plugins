@@ -30,7 +30,7 @@ its absence is itself an observation.
 
 | Refusal | Mechanism | Exception | Code | Specified as | Use cases | Raised in | Caller sees |
 |---|---|---|---|---|---|---|---|
-| <the refusal, in functional terms> | <one of the four mechanisms> | <type, or —> | <CODE, or —> | <scenario, rule or invariant identifier> | <USE-CASE> | <implementation file, or the folder that raises it> | <status, acknowledgement, rejection or dead letter> |
+| <the refusal, in functional terms> | <one of the four mechanisms> | <type, or —> | <CODE, or —> | <scenario, business rule or invariant identifier> | <USE-CASE> | <implementation file, or the folder that raises it> | <status, acknowledgement, rejection or dead letter> |
 
 ## Adapter refusals
 

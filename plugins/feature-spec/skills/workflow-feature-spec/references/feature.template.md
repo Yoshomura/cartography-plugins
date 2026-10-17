@@ -22,7 +22,7 @@ and use the same form in every cross-reference.
 ## Invariants
 
 Rules whose divergence between the use cases of this feature would be a defect: security,
-personal data, accessibility. Written once, here, and never repeated in a use case. A rule that
+personal data, accessibility. Written once, here, and never repeated in a use case. A business rule that
 several use cases share today by coincidence is not an invariant: it is written in each use
 case. `None.` when there is none.
 

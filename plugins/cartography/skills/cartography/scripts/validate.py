@@ -1,4 +1,4 @@
-"""Validate the shape of the cartography artifacts. Format version 2.0.0.
+"""Validate the shape of the cartography artifacts. Format version 2.1.0.
 
 Checks form, never content. That a file has valid frontmatter, its sections in order and no
 banned word says nothing about whether the map is right: what it says is inferred and stays
@@ -18,8 +18,8 @@ by the optional `source` frontmatter key (`code` when the key is absent):
   not exist would be an invention.
 
 The specification the artifacts are compared with is organized by feature and use case: a
-detail entry is named after a use case identifier, and its rules point at the identifier of a
-scenario, a rule or an invariant of that specification.
+detail entry is named after a use case identifier, and its observed business rules point at the identifier of a
+scenario, a business rule or an invariant of that specification.
 """
 
 import io
@@ -27,7 +27,7 @@ import os
 import re
 import sys
 
-FORMAT_VERSION = "2.0.0"
+FORMAT_VERSION = "2.1.0"
 
 CODE = "code"
 FUNCTIONALITY = "functionality"

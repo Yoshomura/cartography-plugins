@@ -29,11 +29,11 @@ code.>
 
 ## The rules it applies
 
-| # | Rule | Specified as |
+| # | Business rule | Specified as |
 |---|---|---|
-| 1 | <the rule, in functional terms> | <scenario, rule or invariant identifier, or empty> |
+| 1 | <the business rule, in functional terms> | <scenario, business rule or invariant identifier, or empty> |
 
-<n> rules observed. <n> scenarios declared in the use case, <n> covered here, <n> tested.
+<n> business rules observed. <n> scenarios declared in the use case, <n> covered here, <n> tested.
 
 An empty cell in the Specified as column is a finding: carry it down to divergences.
 
