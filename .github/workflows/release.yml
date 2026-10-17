@@ -1,225 +1,146 @@
 name: Release
 
-# No paths filter on the master push, on purpose. The tag job is a no-op when every manifest
-# version is already tagged, and running it unconditionally is what lets it catch up on a
-# version merged before this workflow existed.
+# Two semantic versions, both published at the merge, neither ever committed by this workflow.
 #
-# Every job discovers the plugins from plugins/*/.claude-plugin/plugin.json. A new plugin is
-# covered the day its manifest exists; nothing here names a plugin.
+# - The repository version, tag X.Y.Z with no prefix: what a consumer pins with `ref`, since a
+#   `ref` checks out the whole marketplace at one commit. No file carries it. A pull request
+#   declares its level with exactly one label, release:major, release:minor, release:patch or
+#   release:none; the merge on master publishes the highest semver tag raised by that level, or
+#   1.0.0 when no release exists yet.
+# - A plugin version, tag <plugin>--v<version>: the `version` of the plugin's plugin.json, raised
+#   by every pull request that changes the plugin, and the tag Claude Code resolves dependency
+#   version ranges against.
+#
+# The release notes are the `## Release notes` section of the pull request body. This workflow
+# never commits and never pushes a branch; master changes only through a merged pull request.
 on:
   push:
     branches: [master]
+  # No paths filter: the check must run on every pull request, or a required check that never
+  # starts blocks the merge forever. labeled/unlabeled/edited re-run it when the label or the
+  # notes change without a new commit.
   pull_request:
-    paths:
-      - "plugins/**"
-      - "README.md"
-      - "CHANGELOG.md"
-      - ".github/workflows/release.yml"
+    types: [opened, synchronize, reopened, labeled, unlabeled, edited]
 
 permissions:
   contents: read
 
+env:
+  BASE: master
+  RELEASE: .github/scripts/release.py
+
 jobs:
   check:
-    name: version agreement
+    name: release label
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      # fetch-depth: 0 for the three-dot diff below, which needs the merge base with master.
+      # fetch-depth: 0 for the three-dot diff against the base, the plugin versions of the base,
+      # and the tags the next version is computed from.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
 
-      # The install snippets in the README carry literal tags, one per plugin. They are
-      # documentation, not declarations, so nothing breaks the day one drifts and nobody
-      # notices for months. Every "ref" in the README must read <plugin>-<version> and match
-      # that plugin's manifest.
-      - name: Every README pin matches its manifest
+      - name: Read the base branch
+        run: git fetch --no-tags --force origin "$BASE:refs/remotes/origin/$BASE"
+
+      # The body is passed through a file: it is free text written by a person.
+      - name: The pull request declares its release
+        env:
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          BODY: ${{ github.event.pull_request.body }}
         run: |
-          status=0
-          for pinned in $(grep -oP '"ref":\s*"\K[^"]+' README.md); do
-            name="${pinned%-*}"
-            version="${pinned##*-}"
-            manifest="plugins/$name/.claude-plugin/plugin.json"
-            if [ ! -f "$manifest" ]; then
-              echo "::error::the README pins $pinned and there is no plugin named $name"
-              status=1
-              continue
-            fi
-            actual=$(jq -r .version "$manifest")
-            if [ "$actual" != "$version" ]; then
-              echo "::error::the $name manifest says $actual, the README pins $pinned"
-              status=1
-              continue
-            fi
-            echo "$name: both say $version."
-          done
-          exit $status
+          printf '%s' "$BODY" > "$RUNNER_TEMP/body.md"
+          python3 "$RELEASE" check-pr "origin/$BASE" "$RUNNER_TEMP/body.md" "$LABELS"
 
-      # The failure this catches is content merged without a bump: no new tag is published,
-      # so no consuming repository can ever reach it. It reports nothing about the level of
-      # the bump, which is a human ruling. The criterion is in the README. Checked plugin by
-      # plugin: a change under plugins/<name>/ needs a bump of that manifest and no other.
-      - name: Each changed plugin moved its version
-        if: github.event_name == 'pull_request'
-        run: |
-          git fetch --no-tags --force origin master:refs/remotes/origin/master
-          status=0
-          for manifest in plugins/*/.claude-plugin/plugin.json; do
-            dir=$(dirname "$(dirname "$manifest")")
-            name=$(basename "$dir")
-            head=$(jq -r .version "$manifest")
-
-            if ! git cat-file -e "origin/master:$manifest" 2>/dev/null; then
-              echo "$name: new plugin at $head."
-              continue
-            fi
-            base=$(git show "origin/master:$manifest" | jq -r .version)
-
-            if git diff --quiet origin/master...HEAD -- "$dir/"; then
-              echo "$name: no content in this pull request, the version stays at $base."
-              continue
-            fi
-
-            if [ "$base" = "$head" ]; then
-              echo "::error::$dir/ changed and the version stayed at $base"
-              echo "::error::without a bump no tag is published, and no consumer can reach this"
-              status=1
-              continue
-            fi
-
-            newest=$( { echo "$base"; echo "$head"; } | sort -V | tail -1 )
-            if [ "$newest" != "$head" ]; then
-              echo "::error::$name: $head does not come after $base"
-              status=1
-              continue
-            fi
-
-            echo "$name: $base -> $head."
-          done
-          exit $status
-
-      # The release notes are written by a person, in CHANGELOG.md, under a heading
-      # "## <plugin> <version>". They are not generated from commit subjects: notes exist to be
-      # read, and a list of subjects is neither concise nor clear. So a bump without its
-      # section is refused here, while the version number itself is still nobody's business
-      # but the author's.
-      - name: Every version bump carries its changelog section
-        if: github.event_name == 'pull_request'
-        run: |
-          git fetch --no-tags --force origin master:refs/remotes/origin/master
-          status=0
-          for manifest in plugins/*/.claude-plugin/plugin.json; do
-            name=$(basename "$(dirname "$(dirname "$manifest")")")
-            head=$(jq -r .version "$manifest")
-            base=""
-            if git cat-file -e "origin/master:$manifest" 2>/dev/null; then
-              base=$(git show "origin/master:$manifest" | jq -r .version)
-            fi
-
-            if [ "$base" = "$head" ]; then
-              echo "$name: no bump in this pull request."
-              continue
-            fi
-
-            notes=$(awk -v h="## $name $head" '$0 == h {f=1; next} f && /^## / {exit} f {print}' CHANGELOG.md)
-            if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
-              echo "::error::$name moves to $head and CHANGELOG.md carries no '## $name $head' section"
-              status=1
-              continue
-            fi
-
-            echo "CHANGELOG.md carries '## $name $head'."
-          done
-          exit $status
-
-  tag:
-    name: tag from the manifests
+  publish:
+    name: tag the release
     if: github.event_name == 'push'
-    needs: check
     runs-on: ubuntu-latest
-    # Raised on this job alone, the only one that writes. The rest of the workflow, and the
-    # scan workflow, stay on the read-only default.
+    # Two merges in a row must not compute the same next version.
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    # Raised on this job alone, the only one that writes, and it writes tags and a release.
     permissions:
       contents: write
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           fetch-tags: true
 
-      # The tag name is <plugin>-<version>, one tag per plugin version. Semver defines the
-      # version as X.Y.Z; the plugin name is the prefix that lets several plugins share one
-      # repository, each with its own line of versions. A published tag is never moved: a
-      # repository pinned to it must receive the same bytes forever.
-      - name: Tag every manifest version
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          head=$(git rev-parse HEAD)
-          status=0
-          for manifest in plugins/*/.claude-plugin/plugin.json; do
-            dir=$(dirname "$(dirname "$manifest")")
-            name=$(basename "$dir")
-            version=$(jq -r .version "$manifest")
-            tag="$name-$version"
-
-            if existing=$(git rev-parse -q --verify "refs/tags/$tag^{commit}"); then
-              if [ "$existing" = "$head" ]; then
-                echo "$tag already points here, nothing to do."
-              elif git diff --quiet "$existing" "$head" -- "$dir/"; then
-                # Master moved past the published version without touching this plugin: a
-                # changelog, README, workflow or other-plugin commit. There is nothing to
-                # release, and failing here would turn every such commit red for no defect.
-                echo "$tag is published on $existing and $dir/ is unchanged since. Nothing to release."
-              else
-                echo "::error::$tag is published on $existing and $dir/ changed since, master is at $head"
-                echo "::error::a published version is never moved, bump the manifest instead"
-                status=1
-              fi
-            else
-              git tag -a "$tag" -m "$name $version"
-              # Pushed with GITHUB_TOKEN, which does not retrigger a workflow, so no loop.
-              git push origin "$tag"
-              echo "Published $tag on $head."
-            fi
-          done
-          exit $status
-
-      # Separate from the tagging step so that a tag published before this step existed still
-      # gets its release, the same self-healing the tag step has.
-      - name: Publish the releases
+      # The merge commit belongs to exactly one merged pull request. A push that came from no
+      # pull request releases nothing: master is not pushed to directly.
+      - name: Read the merged pull request
+        id: pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          status=0
-          for manifest in plugins/*/.claude-plugin/plugin.json; do
-            name=$(basename "$(dirname "$(dirname "$manifest")")")
-            version=$(jq -r .version "$manifest")
-            tag="$name-$version"
+          gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
+            --jq '[.[] | select(.merged_at != null)][0] // empty' > "$RUNNER_TEMP/pr.json"
+          if [ ! -s "$RUNNER_TEMP/pr.json" ]; then
+            echo "::warning::$GITHUB_SHA comes from no merged pull request; nothing is released."
+            echo "number=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          jq -r .body "$RUNNER_TEMP/pr.json" > "$RUNNER_TEMP/body.md"
+          echo "number=$(jq -r .number "$RUNNER_TEMP/pr.json")" >> "$GITHUB_OUTPUT"
+          echo "labels=$(jq -c '[.labels[].name]' "$RUNNER_TEMP/pr.json")" >> "$GITHUB_OUTPUT"
 
-            if ! git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
-              echo "No $tag tag, so nothing to release."
-              continue
+      - name: Compute the versions
+        id: version
+        if: steps.pr.outputs.number != ''
+        env:
+          LABELS: ${{ steps.pr.outputs.labels }}
+        run: |
+          version=$(python3 "$RELEASE" next "$LABELS")
+          if [ -z "$version" ]; then
+            echo "Pull request #${{ steps.pr.outputs.number }} is release:none; no repository version."
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "plugins=$(python3 "$RELEASE" plugin-tags | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+
+      # A published tag is never moved: a repository pinned to it must receive the same bytes
+      # forever. The repository tag and the plugin tags all point at the merge commit.
+      - name: Tag the release and the plugins
+        if: steps.pr.outputs.number != '' && (steps.version.outputs.version != '' || steps.version.outputs.plugins != '')
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          PLUGINS: ${{ steps.version.outputs.plugins }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for tag in $VERSION $PLUGINS; do
+            if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+              echo "::error::$tag is already published; a published tag is never moved"
+              exit 1
             fi
-
-            if gh release view "$tag" >/dev/null 2>&1; then
-              echo "Release $tag already exists, nothing to do."
-              continue
-            fi
-
-            notes=$(awk -v h="## $name $version" '$0 == h {f=1; next} f && /^## / {exit} f {print}' CHANGELOG.md)
-            if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
-              echo "::error::CHANGELOG.md carries no '## $name $version' section"
-              status=1
-              continue
-            fi
-
-            # A semver prerelease carries a hyphen, as in 1.2.0-rc.1. Marking it keeps it out of
-            # the repository's "latest release".
-            prerelease=""
-            case "$version" in *-*) prerelease="--prerelease" ;; esac
-
-            printf '%s\n' "$notes" | gh release create "$tag" --title "$tag" --notes-file - $prerelease
-            echo "Released $tag."
+            git tag -a "$tag" -m "$tag" "$GITHUB_SHA"
+            git push origin "refs/tags/$tag"
+            echo "Published $tag on $GITHUB_SHA."
           done
-          exit $status
+
+      - name: Publish the release
+        if: steps.version.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PLUGINS: ${{ steps.version.outputs.plugins }}
+          NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          {
+            python3 "$RELEASE" notes "$RUNNER_TEMP/body.md"
+            if [ -n "$PLUGINS" ]; then
+              printf '\nPlugin versions: %s\n' "$(echo $PLUGINS | sed 's/ /, /g')"
+            fi
+            printf '\nFrom #%s.\n' "$NUMBER"
+          } > "$RUNNER_TEMP/notes.md"
+          # A prerelease carries a hyphen before any build metadata, as in 1.2.0-rc.1+build.
+          prerelease=""
+          case "${VERSION%%+*}" in *-*) prerelease="--prerelease" ;; esac
+          gh release create "$VERSION" --title "$VERSION" --notes-file "$RUNNER_TEMP/notes.md" \
+            --verify-tag $prerelease
+          echo "Released $VERSION."

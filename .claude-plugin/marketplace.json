@@ -3,7 +3,7 @@
   "owner": {
     "name": "Yoshomura"
   },
-  "description": "Workspace-agnostic Claude Code tooling: cartography of an existing system by functionality, from its code or from an observed functionality, git commit and pull request conventions executed by narrow agents, and a challenge-then-interview workflow turning a raw idea into a functional spec.",
+  "description": "Workspace-agnostic Claude Code tooling: cartography of an existing system by functionality, from its code or from an observed functionality, and a challenge-then-interview workflow turning a raw idea into a functional specification organized by feature and use case.",
   "plugins": [
     {
       "name": "cartography",
@@ -19,19 +19,6 @@
       ]
     },
     {
-      "name": "git-conventions",
-      "source": "./plugins/git-conventions",
-      "description": "Commit and pull request conventions executed by two narrow agents: committer writes a Conventional Commits + Gitmoji message for the staged changes and commits it after a shape check; pr-opener writes a pull request from the commits and opens or updates it. Neither ever stages, pushes, merges or rewrites history.",
-      "category": "development",
-      "keywords": [
-        "git",
-        "commit",
-        "conventional-commits",
-        "gitmoji",
-        "pull-request"
-      ]
-    },
-    {
       "name": "feature-spec",
       "source": "./plugins/feature-spec",
       "description": "Turns a raw product idea into one feature of a functional specification organized by feature and use case, through a mandatory challenge, then interview, then write sequence. Ships the spec-writer agent and the workflow-feature-spec skill with its feature and use case templates. Never invents a missing fact, never settles an open reflection, never publishes anywhere.",
@@ -44,5 +31,8 @@
         "interview"
       ]
     }
-  ]
+  ],
+  "renames": {
+    "git-conventions": null
+  }
 }

@@ -1,8 +1,8 @@
 # cartography-plugins
 
-A Claude Code plugin marketplace holding three workspace-agnostic plugins: `cartography`,
-`git-conventions` and `feature-spec`. The first is described below; the other two have their
-own section further down.
+A Claude Code plugin marketplace holding two workspace-agnostic plugins: `cartography` and
+`feature-spec`. The first is described below; the second has its own section further down.
+Commit and pull request conventions live in the `yoshomura-git-managment` marketplace.
 
 ## What the plugin does
 
@@ -61,7 +61,7 @@ To declare it for a repository, commit this to that repository's `.claude/settin
       "source": {
         "source": "github",
         "repo": "Yoshomura/cartography-plugins",
-        "ref": "cartography-2.1.0"
+        "ref": "2.0.0"
       }
     }
   },
@@ -73,9 +73,10 @@ To declare it for a repository, commit this to that repository's `.claude/settin
 
 The `ref` is what makes the version a property of the **repository** rather than of the
 developer's machine: each repository pins its tag, bumps it alone, and the bump is a reviewable
-commit. Tags are named `<plugin>-<version>`, so a repository using several plugins of this
-marketplace pins one tag and takes the versions of the others as they stand at that tag. Keep marketplace auto-update disabled, otherwise a background refresh walks past the
-pin.
+commit. The `ref` is a repository version, `X.Y.Z`: it checks out the whole marketplace at one
+commit, so a repository using both plugins pins one tag and takes both as they stand at that
+tag (see [Versioning](#versioning)). Keep marketplace auto-update disabled, otherwise a
+background refresh walks past the pin.
 
 Two things to know when adopting it:
 
@@ -85,28 +86,7 @@ Two things to know when adopting it:
   local `cartographer.md` and `scout.md` when adopting the plugin, or the plugin's versions
   never take effect.
 
-## The other two plugins
-
-### git-conventions
-
-Commit and pull request conventions, executed by two narrow agents so that neither the staged
-diff nor the branch diff enters the caller's context.
-
-| Component | Name | Role |
-|---|---|---|
-| Agent | `committer` | Writes the message for the staged changes, checks its shape, commits. Never stages, pushes or rewrites history, never commits on the default branch |
-| Agent | `pr-opener` | Writes title and body from the commits, opens or updates the pull request. Requires the branch to be pushed already; never pushes, merges or commits |
-| Skill | `git-conventions:commit-message` | The shape `<type>(<scope>): <gitmoji> <description>`, `+ ` details, `Co-authored-by` attribution, and `scripts/check_message.py` that refuses any other shape |
-| Skill | `git-conventions:create-pr` | The pull request conventions: optional project label, body sections, signature line, never the "Generated with Claude Code" footer |
-
-The pull request label is not hardcoded: it comes from the caller's prompt or from the
-project's `CLAUDE.md`, and a project that declares none gets a pull request without a label.
-
-```
-python "${CLAUDE_PLUGIN_ROOT}/skills/commit-message/scripts/check_message.py" <message file>
-```
-
-### feature-spec
+## The other plugin: feature-spec
 
 A raw product idea becomes one feature of the functional specification through a mandatory
 sequence: mode selection (interactive or silent), challenge, interview, write.
@@ -154,15 +134,18 @@ the archived idea. A project overrides them in its `CLAUDE.md` or `AGENTS.md`. W
 a specification afterwards (validation, publication, ticket derivation) belongs to the host
 project.
 
-Install either one the same way as `cartography`:
+Install it the same way as `cartography`:
 
 ```
-/plugin install git-conventions@cartography-plugins
 /plugin install feature-spec@cartography-plugins
 ```
 
-The same override caveat applies: a project's own `.claude/agents/committer.md`,
-`pr-opener.md` or `spec-writer.md` shadows the plugin's version.
+The same override caveat applies: a project's own `.claude/agents/spec-writer.md` shadows the
+plugin's version.
+
+`git-conventions`, formerly in this marketplace, is removed: its scope is covered by the
+`commit-and-pr` plugin of `yoshomura-git-managment`. The catalog maps its name to `null` in
+`renames`, so an existing install is dropped cleanly.
 
 ## The validator
 
@@ -224,40 +207,65 @@ another stack, could use it as-is, it carries no business rule and no technology
 
 ## Versioning
 
-Each plugin's version lives in its own `plugins/<plugin>/.claude-plugin/plugin.json` and
-**nowhere else**. Setting it in the marketplace entry as well would be silently ignored, the
-manifest value always winning, and a stale manifest would mask it.
+**Every version is a Semantic Versioning 2.0.0 string**, `MAJOR.MINOR.PATCH` with an optional
+`-prerelease` and `+build`, and no `v` prefix. `.github/scripts/semver.py` validates and orders
+them. There are two of them, and they answer two different questions.
 
-### The tag is a consequence, not an act
+| Version | Answers | Lives in | Tag |
+|---|---|---|---|
+| **Repository** | What does a consumer that pins this marketplace with `ref` risk? | No file | `X.Y.Z` |
+| **Plugin** | What does a user of this plugin, or a plugin depending on it, risk? | `version` of `plugins/<plugin>/.claude-plugin/plugin.json`, never the marketplace entry | `<plugin>--vX.Y.Z` |
 
-`.github/workflows/release.yml` discovers every manifest under `plugins/*/` on every push to
-`master` and posts the matching `<plugin>-X.Y.Z` tag for each: `cartography-1.1.0`,
-`git-conventions-1.0.0`. The version part is the semantic version itself, with no `v`: semver
-defines a version as `X.Y.Z`, and `v1.1.0` is a tag name rather than a version. The plugin
-name is the prefix that lets several plugins share one repository, each on its own line of
-versions. Nothing in the workflows names a plugin: a new one is covered the day its manifest
-exists. Nobody tags by hand, and a tag that already exists is **never moved**: the job fails
-instead. A repository pinned to a tag must receive the same bytes forever, and a tag that
-slides is the one failure the pin exists to prevent.
+A `ref` checks out the whole marketplace at one commit, so a consumer pins the repository
+version. The plugin tag follows the convention Claude Code resolves dependency version ranges
+against, such as `{ "name": "cartography", "version": "~2.1.0" }`.
 
-The same workflow refuses a pull request that changes `plugins/<plugin>/` while leaving that
-plugin's version alone, and a bump without a `## <plugin> <version>` section in
-`CHANGELOG.md`. Content merged without a bump publishes no tag, so no consuming repository
-can ever reach it — it is merged and unreachable, which is worse than not merged.
+### Both are published at the merge
 
-### Which of the three is a human ruling
+Each pull request carries exactly one label: `release:major`, `release:minor`, `release:patch`
+or `release:none`, and raises the `version` of every plugin it changes. When it is merged on
+`master`, `.github/workflows/release.yml`:
 
-The workflow checks that the number exists and that it goes up. It says nothing about its
-level, because the level is a statement about what a repository pinned to the previous tag
-would suffer, and only a person knows that. The criterion is short enough to be read rather
-than debated:
+1. takes the highest repository tag, raises it by the label's level and tags the merge commit,
+   `1.0.0` when no release exists yet;
+2. tags the same commit `<plugin>--v<version>` for every plugin whose current version has no
+   tag yet;
+3. publishes one release under the repository version, its notes being the `## Release notes`
+   section of the pull request body, followed by the plugin tags.
+
+The workflow never commits and never pushes a branch: `master` changes only through a merged
+pull request. Nobody tags by hand, and a published tag is **never moved**: a repository pinned
+to it must receive the same bytes forever.
+
+The `release label` check refuses a pull request that carries no release label or more than
+one, that changes `plugins/` or `.claude-plugin/` under `release:none`, that releases without a
+non-empty `## Release notes` section, that changes a plugin without raising its version, that
+leaves a plugin without a valid semantic version, that puts a `version` in a marketplace entry,
+or whose label is lower than the highest plugin move: a plugin raised to a new major, or removed
+from the catalog, makes the repository release a major. The
+[releases](https://github.com/Yoshomura/cartography-plugins/releases) are the changelog;
+`CHANGELOG.md` is the frozen history of the releases made before this scheme.
+
+### Example
+
+From repository `3.0.0`, one pull request raises `cartography` from `2.1.0` to `3.0.0`, a major,
+and `feature-spec` from `2.1.0` to `2.2.0`, a minor. Its label must be `release:major`. The merge
+publishes `4.0.0`, `cartography--v3.0.0` and `feature-spec--v2.2.0` on the same commit. A
+consumer pinned to `3.0.0` sees nothing until it moves its `ref` to `4.0.0`; a plugin depending
+on `cartography` with `~2.1.0` keeps resolving to `cartography--v2.1.0`.
+
+### Which level is a human ruling
+
+The workflow checks that the numbers exist, that they go up, and that the repository level
+covers the plugin levels. It says nothing about the level itself: it is a statement about what
+a consumer pinned to the previous version would suffer, and only a person knows that. The level
+is proposed from this table and decided by a human, never picked silently.
 
 | Level | What justifies it |
 |---|---|
-| **major** | An agent or a skill removed or renamed, a `${CLAUDE_PLUGIN_ROOT}` path moved, a format change that invalidates artifacts already committed in a consuming repository |
-| **minor** | An agent, a skill, a tool or a format section added, artifacts already committed staying valid |
+| **major** | A plugin removed from the catalog, an agent or a skill removed or renamed, a `${CLAUDE_PLUGIN_ROOT}` path moved, a format change that invalidates artifacts already committed in a consuming repository |
+| **minor** | An agent, a skill, a script or a format section added, artifacts already committed staying valid |
 | **patch** | Wording, a comment, a validator fix that changes no format |
 
-The install snippets above carry literal tags. They are documentation, not declarations, so
-nothing breaks the day one drifts. The workflow compares each `ref` to its plugin's manifest
-for that reason.
+`release:none` is for a change that ships nothing through the pin: the CI, this README, the
+harness.
