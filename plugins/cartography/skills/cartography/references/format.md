@@ -1,6 +1,6 @@
 # Cartography format — specification
 
-Format version **2.0.0**. Normative for the *shape* of the three artifacts, and only for the
+Format version **2.1.0**. Normative for the *shape* of the three artifacts, and only for the
 shape. What they say is the cartographer's judgment; how they are laid out is this file.
 
 ## Vocabulary
@@ -13,12 +13,12 @@ terms, and no other, are used in every artifact:
 | **Feature** | A functionality | `SIGNIN` |
 | **Use case** | One goal reached by one means. Two means of reaching the same goal are two use cases | `SIGNIN-PASSKEY` |
 | **Scenario** | One way a use case unfolds: nominal, variant or failure | `SIGNIN-PASSKEY-SCENARIO-2` |
-| **Rule** | A rule of one use case | `SIGNIN-PASSKEY-RULE-1` |
+| **Business rule** | A rule of one use case. Never "rule" alone: a rule is also an instruction file of a coding agent harness | `SIGNIN-PASSKEY-BUSINESS-RULE-1` |
 | **Invariant** | A rule of a feature whose divergence between its use cases would be a defect | `SIGNIN-INVARIANT-1` |
 | **Implementation** | What realizes a use case in the system mapped: an existing file with source `code`, a name with source `functionality` | `src/sign_in/passkey.rs`, `Sign in with a passkey` |
 
-A detail entry is named after the use case identifier. Its rules point at the identifier of the
-scenario, rule or invariant they answer, and its counters count scenarios. The identifiers come
+A detail entry is named after the use case identifier. Its observed business rules point at the identifier of the
+scenario, business rule or invariant they answer, and its counters count scenarios. The identifiers come
 from the specification: the cartographer never invents one.
 
 Nothing here is business-specific, and nothing here is technology-specific. No domain term,
@@ -141,9 +141,11 @@ Four columns: `Use case | Scenarios | Implementation | What it answers`.
 - **Scenarios** is `declared/covered/tested`, three integers, no spaces around the slashes.
   Declared comes from the use case of the specification and tested from the test names or
   identifiers carrying the scenario identifier, whatever the test framework (a display name, a
-  test method name, a tag, a test title): both exact. Tested is `0` when no test exists, which
-  is common with source `functionality`. Covered is observed in the implementation, therefore
-  inferred
+  test method name, a tag, a test title, or the group, `describe` block or module the tests sit
+  in): both exact. Identifiers are compared ignoring case and treating `-` and `_` as the same
+  character, so that `signin_passkey_scenario_2` in a language whose names accept no hyphen
+  matches `SIGNIN-PASSKEY-SCENARIO-2`. Tested is `0` when no test exists, which is common with
+  source `functionality`. Covered is observed in the implementation, therefore inferred
 - **Implementation**, source `code`, is a **file** path to existing code, any language, with
   its extension. Every other coordinate in these artifacts is a folder; the implementation is
   the exception, because an application layer rarely has one folder per use case, and a
@@ -235,8 +237,8 @@ or what the functionality was seen or described doing (a screen, a request and i
 a document section). Never what it is meant to do.
 
 `The rules it applies` is the density the whole mechanism exists to expose. Columns
-`# | Rule | Specified as`, one row per rule observed, in functional terms, with the identifier
-of the scenario, rule or invariant it answers, or an empty cell when it answers none. **An
+`# | Business rule | Specified as`, one row per business rule observed, in functional terms, with the identifier
+of the scenario, business rule or invariant it answers, or an empty cell when it answers none. **An
 empty cell is a finding**: carry it down to divergences.
 
 `Observed divergences` is the product of the file. `None.` when there are none.

@@ -31,7 +31,7 @@ its absence is itself an observation.
 
 | Refusal | Mechanism | Exception | Code | Specified as | Use cases | Raised in | Caller sees |
 |---|---|---|---|---|---|---|---|
-| <the refusal, in functional terms> | <one of the four mechanisms> | <type when observed, or —> | <CODE when observed, or —> | <scenario, rule or invariant identifier> | <USE-CASE> | <implementation name> | <message, status, rejection or nothing> |
+| <the refusal, in functional terms> | <one of the four mechanisms> | <type when observed, or —> | <CODE when observed, or —> | <scenario, business rule or invariant identifier> | <USE-CASE> | <implementation name> | <message, status, rejection or nothing> |
 
 ## Adapter refusals
 

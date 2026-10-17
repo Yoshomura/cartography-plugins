@@ -25,11 +25,11 @@ The account is checked against the stored credentials, then a session opens.
 
 ## The rules it applies
 
-| # | Rule | Specified as |
+| # | Business rule | Specified as |
 |---|---|---|
 | 1 | An unknown account is refused | ACC-01-SCENARIO-1 |
 
-1 rules observed. 1 scenarios declared in the use case, 1 covered here, 0 tested.
+1 business rules observed. 1 scenarios declared in the use case, 1 covered here, 0 tested.
 
 An empty cell in the Specified as column is a finding: carry it down to divergences.
 

@@ -5,6 +5,38 @@ Each section is the body of that release, published by `.github/workflows/releas
 the tag `<plugin>-<version>`. The criterion for choosing between major, minor
 and patch is in the [README](README.md#which-of-the-three-is-a-human-ruling).
 
+## feature-spec 2.1.0
+
+**Business rules, Gherkin scenarios and a checker.**
+
+- "Rule" becomes **business rule**, with identifiers `<FEATURE>-<USE-CASE>-BUSINESS-RULE-<n>`:
+  a rule is also an instruction file of a coding agent harness, and the two must never be
+  confused. The use case template's section is `## Business rules`.
+- Each **scenario** carries a short title, one sentence of 120 characters at most, usable as a
+  ticket title, and its Given / When / Then in a `gherkin` block, which says what the sentence
+  says and nothing more.
+- New `scripts/check_specification.py`: checks the shape of a feature folder or of a whole
+  specification folder (identifiers and numbering, sections, use cases listed by the feature,
+  scenario sentence and Gherkin). Fixtures and a unittest runner under `tests/feature-spec/`.
+
+Minor: a template section is renamed and a checker is added; a specification written with
+2.0.0 keeps its content and needs its `Rules` sections and `RULE` identifiers renamed to pass the
+checker.
+
+## cartography 2.1.0
+
+**Business rules and test identifiers.** Format version 2.1.0.
+
+- The vocabulary of the format, the templates and the cartographer speaks of **business rules**:
+  the rules table reads `# | Business rule | Specified as`, and `Specified as` holds the
+  identifier of a scenario, a business rule or an invariant.
+- The tested counter also reads the group, `describe` block or module the tests sit in, and
+  compares identifiers ignoring case and treating `-` and `_` as the same character, so that a
+  language whose names accept no hyphen, such as Rust, is counted.
+
+Minor: no section, key or column count changes; every artifact written with format 2.0.0 still
+passes the validator.
+
 ## feature-spec 2.0.0
 
 **A specification organized by feature and use case.** The skill no longer writes one spec file

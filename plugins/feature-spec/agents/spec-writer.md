@@ -15,7 +15,7 @@ tickets, never write ticket drafts.
 
 The vocabulary is fixed: a **feature** is a functionality; a **use case** is one goal reached by
 one means, so two means are two use cases; a **scenario** is one way a use case unfolds; a
-**rule** belongs to one use case; an **invariant** is a rule of the feature whose divergence
+**business rule** belongs to one use case; an **invariant** is a rule of the feature whose divergence
 would be a defect. Each carries a fixed identifier in full words (`SIGNIN-PASSKEY-SCENARIO-2`,
 `SIGNIN-INVARIANT-1`).
 

@@ -20,7 +20,7 @@ truth; these are measuring instruments, and each says so in its own header.
 
 The specification they are compared with is organized by **feature** (a functionality) and
 **use case** (one goal reached by one means), each use case holding its **scenarios** and
-**rules**, each feature its **invariants**, all with fixed identifiers such as
+**business rules**, each feature its **invariants**, all with fixed identifiers such as
 `SIGNIN-PASSKEY-SCENARIO-2`. The `feature-spec` plugin writes that specification.
 
 The system is read from one of two sources, declared by the `source` key of every artifact and
@@ -61,7 +61,7 @@ To declare it for a repository, commit this to that repository's `.claude/settin
       "source": {
         "source": "github",
         "repo": "Yoshomura/cartography-plugins",
-        "ref": "cartography-2.0.0"
+        "ref": "cartography-2.1.0"
       }
     }
   },
@@ -123,13 +123,30 @@ docs/specifications/
 ├── features.md                       index of the features
 └── sign-in/                          one folder per feature
     ├── sign-in.md                    goal, facts, invariants, use cases, decisions, open questions
-    └── sign-in-with-passkey.md       one file per use case: goal, rules, scenarios
+    └── sign-in-with-passkey.md       one file per use case: goal, business rules, scenarios
 ```
 
 A use case is one goal reached by one means: two means of reaching the same goal are two use
-cases. Invariants, rules and scenarios carry fixed identifiers in full words
-(`SIGNIN-INVARIANT-1`, `SIGNIN-PASSKEY-RULE-1`, `SIGNIN-PASSKEY-SCENARIO-2`), and tests start
-with the identifier they cover.
+cases. Invariants, business rules and scenarios carry fixed identifiers in full words
+(`SIGNIN-INVARIANT-1`, `SIGNIN-PASSKEY-BUSINESS-RULE-1`, `SIGNIN-PASSKEY-SCENARIO-2`); "rule"
+alone is never used, since a rule is also an instruction file of a coding agent harness. Each
+scenario has a sentence of 120 characters at most, usable as a ticket title, and its Given /
+When / Then. Tests are grouped under the identifier they cover.
+
+The skill ships a checker of that shape, run on a feature folder or on the whole specification
+folder:
+
+```
+python "${CLAUDE_PLUGIN_ROOT}/skills/workflow-feature-spec/scripts/check_specification.py" docs/specifications
+```
+
+It checks the form, never the content: identifiers and their numbering, sections and their
+order, the use cases listed by the feature, and every scenario's sentence and Given / When /
+Then. Its fixtures live in `tests/feature-spec/fixtures/`:
+
+```
+python -m unittest discover -s tests/feature-spec -v
+```
 
 Default paths are `docs/Features TODO/` for the idea inbox, `docs/specifications/<feature>/`
 for the specification and `docs/archives/<year>/<feature>/notes-before-spec-<feature>.md` for

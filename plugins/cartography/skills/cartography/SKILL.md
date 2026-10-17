@@ -6,7 +6,7 @@ license: MIT
 
 # Cartography format
 
-**Format version 2.0.0.** Business-agnostic and technology-agnostic: no domain term, no
+**Format version 2.1.0.** Business-agnostic and technology-agnostic: no domain term, no
 language and no folder convention appears in this skill or in its templates.
 
 This skill holds the **shape** of the three cartography artifacts. It does not hold the
