@@ -1,9 +1,12 @@
 # Changelog
 
-Released versions, newest first, one section per plugin version, headed `## <plugin> <version>`.
-Each section is the body of that release, published by `.github/workflows/release.yml` under
-the tag `<plugin>-<version>`. The criterion for choosing between major, minor
-and patch is in the [README](README.md#which-of-the-three-is-a-human-ruling).
+**Frozen.** Since repository version 2.0.0, the
+[releases](https://github.com/Yoshomura/cartography-plugins/releases) are the changelog: each
+one carries the release notes of its pull request and the plugin tags it published (see the
+README, [Versioning](README.md#versioning)).
+
+What follows is the history of the releases made before that scheme, one section per plugin
+version, published under the former tags `<plugin>-<version>`.
 
 ## feature-spec 2.1.0
 
