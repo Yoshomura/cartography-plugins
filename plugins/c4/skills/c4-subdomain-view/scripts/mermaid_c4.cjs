@@ -45,7 +45,7 @@ async function withDiagram(code, fn) {
       catch (e) { window.err = String(e); }
       window.done = true;
     </script></body></html>`);
-    await page.waitForFunction('window.done === true', null, { timeout: 90000 });
+    await page.waitForFunction(() => window.done === true, null, { timeout: 90000 });
     const err = await page.evaluate(() => window.err);
     if (err) throw new Error(err);
     return await fn(page);
