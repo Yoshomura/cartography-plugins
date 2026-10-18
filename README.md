@@ -1,7 +1,8 @@
 # cartography-plugins
 
-A Claude Code plugin marketplace holding two workspace-agnostic plugins: `cartography` and
-`feature-spec`. The first is described below; the second has its own section further down.
+A Claude Code plugin marketplace holding three workspace-agnostic plugins: `cartography`,
+`feature-spec` and `c4`. The first is described below; the other two have their own sections
+further down.
 Commit and pull request conventions live in the `yoshomura-git-managment` marketplace.
 
 ## What the plugin does
@@ -146,6 +147,44 @@ plugin's version.
 `git-conventions`, formerly in this marketplace, is removed: its scope is covered by the
 `commit-and-pr` plugin of `yoshomura-git-managment`. The catalog maps its name to `null` in
 `renames`, so an existing install is dropped cleanly.
+
+## The third plugin: c4
+
+C4 architecture diagrams, Level 1 (System Context) and Level 2 (Containers), in one notation and
+three formats: Mermaid to design and reverse engineer, draw.io as the versioned reference, a
+self-contained HTML page to present.
+
+| Component | Name | Role |
+|---|---|---|
+| Skill | `c4:c4-diagrams` | The design system (`references/notation.md`: classic C4 palette, shapes, wording, message buses, draw.io styles, Mermaid mapping), the drawing library (`scripts/c4lib.py`, `scripts/c4drawio.py`) and a draw.io importer |
+| Skill | `c4:c4-subdomain-view` | The view of one sub-domain with every link in or out of it, generated from one JSON model in Mermaid and draw.io at once |
+
+The sub-domain view stacks the public bus on top, the sub-domain in focus in the middle and the
+private buses at the bottom; every other sub-domain is one box. Messages run on at most two lanes
+per element and bus, vermillion to the bus and blue from it, each listing its message names; a
+database sits below its sub-domain with one link listing every access; a data sink sits below the
+store it exports. The generator routes every link orthogonally around the boxes and centres each
+label on its line:
+
+```
+python "${CLAUDE_PLUGIN_ROOT}/skills/c4-subdomain-view/scripts/subdomain_view.py" all models/ordering.json
+```
+
+It writes `architecture/mermaid/c4-ordering.md` and `architecture/drawio/c4-ordering.drawio` from
+the current directory (`--mermaid-dir` and `--drawio-dir` change the folders). The draw.io needs
+Python only; the Mermaid view needs Node.js and Playwright, which render it with Mermaid to fit
+its rows and move its labels off the boxes. The examples, an online shop and its Ordering
+sub-domain, ship with the skills. The tests cover the draw.io generation and the model checks:
+
+```
+python -m unittest discover -s tests/c4 -v
+```
+
+Install it the same way:
+
+```
+/plugin install c4@cartography-plugins
+```
 
 ## The validator
 

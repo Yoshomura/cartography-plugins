@@ -29,9 +29,10 @@ install and the release process.
 
 ## Tests
 
-Run both suites before committing a change to a plugin:
+Run every suite before committing a change to a plugin:
 
 ```
 python -m unittest discover -s tests/cartography
 python -m unittest discover -s tests/feature-spec
+python -m unittest discover -s tests/c4
 ```
