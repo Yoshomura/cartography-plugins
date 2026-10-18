@@ -1,0 +1,17 @@
+{
+  "name": "c4",
+  "displayName": "C4 diagrams",
+  "version": "1.0.0",
+  "description": "C4 architecture diagrams (System Context, Containers) in one notation and three formats: Mermaid for design, draw.io for reference, HTML for presentation. Ships the design system, a drawing library with an orthogonal router, and a generator that draws the view of one sub-domain with every link in or out of it from a single JSON model, in Mermaid and draw.io at once.",
+  "author": {
+    "name": "Yoshomura"
+  },
+  "license": "MIT",
+  "keywords": [
+    "c4",
+    "architecture",
+    "diagrams",
+    "drawio",
+    "mermaid"
+  ]
+}

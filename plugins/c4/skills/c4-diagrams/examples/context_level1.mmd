@@ -1,0 +1,24 @@
+C4Context
+  title System Context diagram for Online shop
+
+  Person(customer, "Customer", "Browses the catalog, places and follows orders")
+  Person(operator, "Back-office operator", "Manages products, prices and refunds")
+
+  System(shop, "Online shop", "Product catalog, shopping cart, ordering, payment and shipping follow-up")
+
+  System_Ext(idp, "Identity provider", "Customer sign-up and sign-in")
+  System_Ext(psp, "Payment service provider", "Card payments and refunds")
+  System_Ext(carrier, "Carrier API", "Shipment booking and parcel tracking")
+  System_Ext(email, "Email service", "Transactional emails")
+  System_Ext(dwh, "Data warehouse", "Sales reporting")
+
+  Rel(customer, shop, "Browses products, places and follows orders", "HTTPS")
+  Rel(operator, shop, "Manages catalog, prices and refunds", "HTTPS")
+  Rel(shop, idp, "Authenticates customers", "OIDC")
+  Rel(shop, psp, "Charges and refunds payments", "HTTPS")
+  Rel(psp, shop, "Notifies payment results", "webhook")
+  Rel(shop, carrier, "Books shipments, tracks parcels", "HTTPS")
+  Rel(shop, email, "Sends order and shipping emails", "HTTPS")
+  Rel(shop, dwh, "Exports orders and sales every night", "file export")
+
+  UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")

@@ -1,0 +1,59 @@
+{
+  "system": "Online shop",
+  "focus": "Ordering",
+  "date": "",
+  "containers": [
+    {"id": "orderingapi", "name": "ordering-api", "tech": "Container, REST API", "desc": "Places, cancels and returns orders", "kind": "container"},
+    {"id": "orderingworker", "name": "ordering-worker", "tech": "Container, message consumer", "desc": "Drives the order lifecycle from payment to delivery", "kind": "container"},
+    {"id": "archivejob", "name": "order-archive-job", "tech": "Scheduled job, daily", "desc": "Archives orders closed for two years", "kind": "container"},
+    {"id": "ordersdb", "name": "Orders DB", "tech": "PostgreSQL", "desc": "Orders, order lines, status history", "kind": "store"},
+    {"id": "orderssink", "name": "orders data sink", "tech": "Scheduled job, hourly", "desc": "Exports orders to the data warehouse", "kind": "datasink"},
+    {"id": "distcache", "name": "Distributed cache", "tech": "Redis", "desc": "Cache keys shared by the sub-domains", "kind": "store"}
+  ],
+  "externals": [
+    {"id": "apigateway", "name": "API gateway", "desc": "Exposes the shop APIs to the web and mobile apps"},
+    {"id": "email", "name": "Email service", "desc": "Transactional emails"},
+    {"id": "dwh", "name": "Data warehouse", "desc": "Sales reporting"}
+  ],
+  "subdomains": [
+    {"id": "catalog", "name": "Catalog", "purpose": "Products, prices and stock"},
+    {"id": "payment", "name": "Payment", "purpose": "Charges and refunds"},
+    {"id": "shipping", "name": "Shipping", "purpose": "Shipments and parcel tracking"},
+    {"id": "customer", "name": "Customer", "purpose": "Customer accounts and loyalty"}
+  ],
+  "public_bus": {"id": "publicbus", "name": "Enterprise event bus", "tech": "Apache Kafka", "techno": "KAFKA",
+                 "desc": "Topics shared with the other systems"},
+  "private_buses": [
+    {"id": "privatebus", "name": "Domain event bus", "tech": "AWS SNS to SQS", "desc": "Events and commands between the sub-domains"},
+    {"id": "redis", "name": "Redis pub/sub", "tech": "Redis", "desc": "Change notifications between the sub-domains"}
+  ],
+  "messages": [
+    {"from": "orderingapi", "to": "privatebus", "groups": [{"kind": "event", "names": ["order_submitted", "order_cancelled"]}]},
+    {"from": "privatebus", "to": "orderingworker", "groups": [
+      {"kind": "event", "names": ["order_submitted", "payment_succeeded", "payment_failed", "shipment_delivered"]}]},
+    {"from": "orderingworker", "to": "privatebus", "groups": [
+      {"kind": "event", "names": ["order_confirmed"]}, {"kind": "command", "names": ["charge_order", "refund_order"]}]},
+    {"from": "privatebus", "to": "payment", "groups": [{"kind": "command", "names": ["charge_order", "refund_order"]}]},
+    {"from": "payment", "to": "privatebus", "groups": [{"kind": "event", "names": ["payment_succeeded", "payment_failed"]}]},
+    {"from": "privatebus", "to": "shipping", "groups": [{"kind": "event", "names": ["order_confirmed"]}]},
+    {"from": "shipping", "to": "privatebus", "groups": [{"kind": "event", "names": ["shipment_delivered"]}]},
+    {"from": "catalog", "to": "redis", "groups": [{"kind": "Redis pub/sub", "names": ["price_changed", "stock_changed"]}]},
+    {"from": "redis", "to": "orderingapi", "groups": [{"kind": "Redis pub/sub", "names": ["price_changed", "stock_changed"]}]},
+    {"from": "orderingworker", "to": "publicbus", "groups": [
+      {"kind": "event", "names": ["order_completed_v1"]}, {"kind": "command", "names": ["send_order_email_v1"]}]},
+    {"from": "publicbus", "to": "customer", "groups": [{"kind": "event", "names": ["order_completed_v1"]}]},
+    {"from": "publicbus", "to": "email", "groups": [{"kind": "command", "names": ["send_order_email_v1"]}]}
+  ],
+  "links": [
+    {"from": "apigateway", "to": "orderingapi", "label": "Place, cancel and get orders", "protocol": "HTTPS"},
+    {"from": "orderingapi", "to": "catalog", "label": "Get product prices and stock", "protocol": "HTTP"},
+    {"from": "orderingapi", "to": "ordersdb", "label": "Insert orders, read order history", "protocol": "SQL"},
+    {"from": "orderingworker", "to": "ordersdb", "label": "Update order status", "protocol": "SQL"},
+    {"from": "archivejob", "to": "ordersdb", "label": "Move closed orders to the archive tables", "protocol": "SQL"},
+    {"from": "orderingapi", "to": "distcache", "label": "Read and write shopping carts", "protocol": "Redis"},
+    {"from": "orderssink", "to": "ordersdb", "label": "Read orders", "protocol": "SQL"},
+    {"from": "orderssink", "to": "dwh", "label": "Export orders hourly", "protocol": "file export"}
+  ],
+  "notes": ["Example model of the c4-subdomain-view skill: the Ordering sub-domain of an online shop."],
+  "open_questions": []
+}

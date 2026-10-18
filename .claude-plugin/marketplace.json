@@ -3,7 +3,7 @@
   "owner": {
     "name": "Yoshomura"
   },
-  "description": "Workspace-agnostic Claude Code tooling: cartography of an existing system by functionality, from its code or from an observed functionality, and a challenge-then-interview workflow turning a raw idea into a functional specification organized by feature and use case.",
+  "description": "Workspace-agnostic Claude Code tooling: cartography of an existing system by functionality, from its code or from an observed functionality, and a challenge-then-interview workflow turning a raw idea into a functional specification organized by feature and use case, and C4 architecture diagrams in one notation, from Mermaid design to draw.io reference.",
   "plugins": [
     {
       "name": "cartography",
@@ -29,6 +29,19 @@
         "conception",
         "functional-spec",
         "interview"
+      ]
+    },
+    {
+      "name": "c4",
+      "source": "./plugins/c4",
+      "description": "C4 architecture diagrams (System Context, Containers) in one notation and three formats: Mermaid for design, draw.io for reference, HTML for presentation. Ships the design system, a drawing library with an orthogonal router, and a generator that draws the view of one sub-domain with every link in or out of it from a single JSON model, in Mermaid and draw.io at once.",
+      "category": "documentation",
+      "keywords": [
+        "c4",
+        "architecture",
+        "diagrams",
+        "drawio",
+        "mermaid"
       ]
     }
   ],
