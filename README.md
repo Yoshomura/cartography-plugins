@@ -66,7 +66,7 @@ To declare it for a repository, commit this to that repository's `.claude/settin
       "source": {
         "source": "github",
         "repo": "Yoshomura/cartography-plugins",
-        "ref": "2.0.0"
+        "ref": "2.2.0"
       }
     }
   },
