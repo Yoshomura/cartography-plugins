@@ -26,6 +26,7 @@ DRAWIO_DIR = os.path.join("architecture", "drawio")
 C4LIB = os.path.normpath(os.path.join(HERE, "..", "..", "c4-diagrams", "scripts"))
 sys.path.insert(0, C4LIB)
 NODE_TOOL = os.path.join(HERE, "mermaid_c4.cjs")
+from c4lib import GENERATED_WITH
 
 GREEN = '$bgColor="rgba(109,174,109,0.15)", $fontColor="#2E6B2E", $borderColor="#6DAE6D"'
 CSS_HEADER = ('---\nconfig:\n  themeCSS: "rect[stroke=\\"#6DAE6D\\"] { stroke-dasharray: 7 7; stroke-width: 1px; }"\n---\n')
@@ -169,7 +170,7 @@ class Model:
 # =====================================================================================  Mermaid
 def mermaid_code(M, n_per_row=4, offsets=()):
     alias = lambda sd_id, top: f"{sd_id}_pub" if top else sd_id
-    L = [CSS_HEADER.rstrip("\n"), "C4Container",
+    L = [CSS_HEADER.rstrip("\n"), "C4Container", f"  %% {GENERATED_WITH}",
          f"  title {M.focus} sub-domain - containers and every link in or out" + (f", {M.date}" if M.date else ""), ""]
     for e in M.externals:
         L.append(f'  System_Ext({e["id"]}, "{e["name"]}", "{e.get("desc", "")}")')

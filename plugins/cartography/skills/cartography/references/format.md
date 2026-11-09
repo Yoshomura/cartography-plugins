@@ -1,6 +1,6 @@
 # Cartography format — specification
 
-Format version **2.1.0**. Normative for the *shape* of the three artifacts, and only for the
+Format version **2.2.0**. Normative for the *shape* of the three artifacts, and only for the
 shape. What they say is the cartographer's judgment; how they are laid out is this file.
 
 ## Vocabulary
@@ -191,6 +191,16 @@ coordinate can tell it is stale without a pass being run.
 Coordinates holding behavior attached to no use case, named one by one. Coordinates holding no
 functionality — launch settings, composition root, project files, a static page — are
 **counted, never listed**. That is what keeps the file bounded as the deployable grows.
+
+### Provenance
+
+After the last section, a horizontal rule and one line, copied from the template:
+
+`Generated with cartography <plugin version> (https://github.com/Yoshomura/cartography-plugins)`
+
+It tells a reader which version of the plugin, and so of this format, wrote the set. It belongs to
+`map.md` only, never to a detail entry or to `refusals.md`. A set without it stays valid: the
+validator does not look for it.
 
 ---
 

@@ -18,3 +18,7 @@ No password is ever sent by email.
 | ID | Use case | Actor |
 |---|---|---|
 | `SIGNIN-PASSKEY` | [Sign in with a passkey](sign-in-with-passkey.md) | Person |
+
+---
+
+Generated with feature-spec 2.2.0 (https://github.com/Yoshomura/cartography-plugins)

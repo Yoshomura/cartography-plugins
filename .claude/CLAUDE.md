@@ -35,4 +35,5 @@ Run every suite before committing a change to a plugin:
 python -m unittest discover -s tests/cartography
 python -m unittest discover -s tests/feature-spec
 python -m unittest discover -s tests/c4
+python -m unittest discover -s tests/packaging
 ```

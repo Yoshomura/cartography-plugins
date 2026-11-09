@@ -63,3 +63,7 @@ Folders carrying code attached to no use case. This is where an anomaly reads.
 None.
 
 Technical, no functionality: <n> folders.
+
+---
+
+Generated with cartography 2.2.0 (https://github.com/Yoshomura/cartography-plugins)

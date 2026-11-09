@@ -129,6 +129,8 @@ Apply the project's naming conventions and glossary throughout when it declares 
 Fill the feature file from `feature.template.md` and one file per use case from
 `use-case.template.md`, then add or update the feature's row in the index of the features:
 
+- **Provenance**: keep the last line of the feature file, `Generated with feature-spec <version>`
+  under its horizontal rule, exactly as the template gives it. It is not part of Open questions.
 - **Use cases**: one goal reached by one means per file. Two means of reaching the same goal are
   two use case files, never two scenarios of one.
 - **Business rules**: one sentence each, in the use case they belong to, with an identifier

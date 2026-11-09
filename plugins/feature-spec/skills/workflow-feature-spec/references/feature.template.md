@@ -59,3 +59,7 @@ Must be empty, here and in every use case file of this pass, before Status can b
 Inline gaps are marked `> OPEN QUESTION: <what is missing>` and collected here.
 
 - ...
+
+---
+
+Generated with feature-spec 2.2.0 (https://github.com/Yoshomura/cartography-plugins)

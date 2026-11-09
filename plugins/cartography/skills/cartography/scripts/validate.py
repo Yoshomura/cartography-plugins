@@ -1,4 +1,4 @@
-"""Validate the shape of the cartography artifacts. Format version 2.1.0.
+"""Validate the shape of the cartography artifacts. Format version 2.2.0.
 
 Checks form, never content. That a file has valid frontmatter, its sections in order and no
 banned word says nothing about whether the map is right: what it says is inferred and stays
@@ -27,7 +27,7 @@ import os
 import re
 import sys
 
-FORMAT_VERSION = "2.1.0"
+FORMAT_VERSION = "2.2.0"
 
 CODE = "code"
 FUNCTIONALITY = "functionality"

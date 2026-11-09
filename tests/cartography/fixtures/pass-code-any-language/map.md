@@ -45,3 +45,7 @@ Behavior lives in `details/<USE-CASE>.md`, the refusal surface in `refusals.md`,
 None.
 
 Technical, no functionality: 2 folders.
+
+---
+
+Generated with cartography 2.2.0 (https://github.com/Yoshomura/cartography-plugins)

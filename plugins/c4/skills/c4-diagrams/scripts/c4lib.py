@@ -11,6 +11,10 @@ from a repository root leaves no stray folder in the working tree.
 import os, tempfile
 ROOT = os.environ.get("C4_OUT") or os.path.join(tempfile.gettempdir(), "c4-diagrams")
 
+# Provenance line of every generated file: a comment in Mermaid and draw.io, a `generator` tag in
+# HTML, never drawn. The version is the plugin's (tests/c4 checks it against plugin.json).
+GENERATED_WITH = "Generated with c4 1.1.0 (https://github.com/Yoshomura/cartography-plugins)"
+
 # chrome (titles, eyebrow, legend frame): neutral greys and the C4 system blue as accent
 INK900, INK700, INK500, INK100 = "#111827", "#374151", "#6B7280", "#E5E7EB"
 ACCENT, WHITE = "#1168BD", "#FFFFFF"
@@ -162,7 +166,7 @@ class Doc:
         body = f'<div style="position: relative; width: {self.w}px; height: {self.hh}px; background: {WHITE}; font-family: {BODY}; color: {INK900}">\n'
         body += "\n".join(self.bands + self.arrows + self.cards + self.labels)
         body += "\n</div>\n"
-        html = (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{self.ttl}</title>'
+        html = (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="generator" content="{GENERATED_WITH}"><title>{self.ttl}</title>'
                 f'<style>body{{margin:0;background:#F3F4F6}}</style></head><body>{body}</body></html>')
         os.makedirs(ROOT, exist_ok=True)
         with open(os.path.join(ROOT, path), "w", encoding="utf-8") as f:
