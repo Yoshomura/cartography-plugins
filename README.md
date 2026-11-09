@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo-cartography.svg" alt="Cartography" width="570">
+</p>
+
 # cartography-plugins
 
 A Claude Code plugin marketplace holding three workspace-agnostic plugins: `cartography`,
@@ -308,3 +312,13 @@ is proposed from this table and decided by a human, never picked silently.
 
 `release:none` is for a change that ships nothing through the pin: the CI, this README, the
 harness.
+
+## License
+
+[MIT](LICENSE), copyright Nicolas Jouet (Yoshomura). Each plugin folder carries its own copy of
+the license, because an installed plugin is copied without the rest of this repository.
+
+The documents the plugins produce belong to whoever produces them. Each one carries a
+`Generated with <plugin> <version>` line pointing at this repository: a footer in the
+cartography map and in a feature file, a comment or a `generator` tag in a C4 diagram. It says
+which version wrote the document, no check requires it, and it can be removed.

@@ -14,6 +14,8 @@ coordinates, with the styles of references/notation.md (section "draw.io"):
 import html, math
 from xml.sax.saxutils import quoteattr
 
+from c4lib import GENERATED_WITH
+
 LINE = "#707070"
 PUBLISH = "#D55E00"    # bus lane, element to bus (publish / send)
 SUBSCRIBE = "#0072B2"  # bus lane, bus to element (subscribe / receive)
@@ -223,7 +225,7 @@ class Writer:
         for r in rec:
             if r[0] in ("label", "title", "legend", "footer"): getattr(self, r[0])(*r[1:])
         body = "\n        ".join(self.cells)
-        return (f'<mxfile host="c4lib">\n  <diagram id="c4" name={quoteattr(self.doc.ttl)}>\n'
+        return (f'<mxfile host="c4lib">\n  <!-- {GENERATED_WITH} -->\n  <diagram id="c4" name={quoteattr(self.doc.ttl)}>\n'
                 f'    <mxGraphModel grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" '
                 f'pageWidth="{self.doc.w}" pageHeight="{self.doc.hh}" background="#FFFFFF" math="0" shadow="0">\n'
                 f'      <root>\n        <mxCell id="0"/>\n        <mxCell id="1" parent="0"/>\n        {body}\n      </root>\n'

@@ -63,3 +63,7 @@ Observed coordinates carrying behavior attached to no use case. This is where an
 None.
 
 Technical, no functionality: <n> coordinates.
+
+---
+
+Generated with cartography 2.2.0 (https://github.com/Yoshomura/cartography-plugins)

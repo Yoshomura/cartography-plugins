@@ -38,7 +38,9 @@ a draw.io layout is expected. Never pick by default.
    source or target are legend samples, drop them). From code: name the source of every element and
    link; a missing fact is an open question, never a guess.
 2. **Mermaid**: write the `.mmd` (or the ```` ```mermaid ```` block of a document) following the
-   notation's Mermaid table. Model: `examples/context_level1.mmd`.
+   notation's Mermaid table. Model: `examples/context_level1.mmd`. Keep its `%% Generated with c4`
+   comment as the first line under the diagram type; the scripts write the same provenance into
+   the draw.io and HTML files themselves.
 3. **draw.io and HTML**: write a generator script modelled on `examples/context_level1.py`. Lay out on
    the grid: 320 px column pitch, 180 px row pitch, 64 px margins; externals left and right of the
    boundary, sub-domain bands inside, private bus band at the bottom. Plan lanes (vertical gaps
